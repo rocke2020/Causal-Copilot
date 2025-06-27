@@ -1,4 +1,4 @@
-from openai import OpenAI
+from llm import LLMClient
 import json
 import os
 import pandas as pd
@@ -9,7 +9,7 @@ class UpliftFilter:
     """
     def __init__(self, args):
         self.args = args
-        self.client = OpenAI()
+        self.client = LLMClient(args)
         
     def load_algo_context(self, outcome_type):
         """Load the appropriate algorithm context based on outcome type"""
@@ -85,17 +85,14 @@ class UpliftFilter:
         )
         
         # Get algorithm suggestions from LLM
-        response = self.client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "You are a causal discovery expert. Provide your response in JSON format."},
-                {"role": "user", "content": prompt}
-            ],
-            response_format={"type": "json_object"}
+        response = self.client.chat_completion(
+            prompt=prompt,
+            system_prompt="You are a helpful assistant for Uplift uplift_filter.",
+            json_response=True
         )
         
         # Parse and store the algorithm suggestion
-        algo_candidates = self.parse_response(response.choices[0].message.content)
+        algo_candidates = self.parse_response(response)
         global_state.inference.uplift_algo_json = algo_candidates
         
         return global_state

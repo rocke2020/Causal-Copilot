@@ -108,11 +108,10 @@ async def select_algorithm(simulation):
     try:
         args = generate_dummy_args()
         client = AsyncOpenAI()
-        response = await client.chat.completions.create(
-            model=BASELINE_MODEL,
-            messages=[
-                {"role": "user", "content": prompt}
-            ],
+        response = await client.chat_completion(
+            prompt=prompt,
+            system_prompt="You are a helpful assistant for selection testing.",
+            json_response=True
         )
         answer = response.choices[0].message.content.strip()
         answer = re.search(r'<json>(.*?)</json>', answer, re.DOTALL).group(1)

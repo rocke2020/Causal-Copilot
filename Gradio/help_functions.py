@@ -4,7 +4,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import traceback
 from preprocess.stat_info_functions import *
-from openai import OpenAI
+from llm import LLMClient
 from pydantic import BaseModel
 from typing import List, Union, Any, Optional, Literal
 import torch 
@@ -41,7 +41,7 @@ def generate_hyperparameter_text(global_state):
     return hyperparameter_text, global_state
 
 def LLM_parse_query(format, prompt, message):
-    client = OpenAI()
+    client = LLMClient()
     if format:
         completion = client.beta.chat.completions.parse(
         model="gpt-4o-mini-2024-07-18",

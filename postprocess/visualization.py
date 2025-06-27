@@ -208,7 +208,7 @@ class Visualization(object):
             plt.title(f'Confidence Heatmap for {name}', fontsize=14, fontweight='bold')
             plt.tight_layout()
             # Save the plot
-            save_path_conf = os.path.join(self.save_dir, f'{key}_confidence_heatmap.jpg')
+            save_path_conf = os.path.join(self.save_dir, f'{key}confidence_heatmap.jpg')
             plt.savefig(fname=save_path_conf, dpi=1000)
             paths.append(save_path_conf)
 

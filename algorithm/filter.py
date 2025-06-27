@@ -1,7 +1,7 @@
 import json
 import os
 import torch
-from algorithm.llm_client import LLMClient
+from llm import LLMClient
 
 TOP_K = 2
 

@@ -1,4 +1,4 @@
-from openai import OpenAI
+from llm import LLMClient
 import json
 import os
 import sklearn
@@ -26,18 +26,12 @@ class UpliftParamSelector:
         return prompt
     
     def model_suggestion(self, client, prompt):
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "You are a causal discovery expert. Provide your response in JSON format."},
-                {"role": "user", "content": prompt}
-            ],
-            response_format={"type": "json_object"}
+        response = client.chat_completion(
+            prompt=prompt,
+            system_prompt="You are a helpful assistant for Uplift uplift_params.",
+            json_response=True
         )
-
-        print("Model Response: ", response.choices[0].message.content)
-        model_suggest_json = json.loads(response.choices[0].message.content)
-        return model_suggest_json
+        return response
 
     def get_model(self, model_name):
         #Focus on tree based models
@@ -48,8 +42,7 @@ class UpliftParamSelector:
             return ensemble.RandomForestRegressor()
 
     def forward(self, global_state):
-        from openai import OpenAI
-        client = OpenAI()
+        client = LLMClient(self.args)
         model_prompt = self.prompt_generation(global_state)
 
         global_state.inference.uplift_model_json = None

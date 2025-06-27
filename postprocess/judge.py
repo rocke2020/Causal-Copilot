@@ -6,6 +6,7 @@ from causallearn.graph.GraphNode import GraphNode
 from causallearn.graph.Edge import Edge
 from causallearn.graph.Endpoint import Endpoint
 from causallearn.utils.DAG2CPDAG import dag2cpdag
+from llm import LLMClient
 
 def array2cpdag(adj_array, node_names):
     # for methods return cpdag
@@ -176,7 +177,6 @@ class Judge(object):
 
     def graph_refutation(self, global_state):
         import networkx as nx
-        from openai import OpenAI
         data = global_state.user_data.processed_data
         revised_graph = global_state.results.revised_graph
         savepath = global_state.user_data.output_graph_dir
@@ -205,15 +205,13 @@ Write a brief 1 paragraph analysis for the causal graph refutation test based on
 **Test Introduction**
 The results of falsify_graph show the output of two tests. The first measures whether the LMCs implied by the graph are satisfied by the data. It compares the number of LMCs violated by the given graph to the number of LMCs violated by random graphs. For a significance value of 0.05, if the number of LMC violations by the given graph is lower than the 5% best random graphs, then we do not reject the graph. The second test (tPa) checks whether the graph is falsifiable. That is, assuming that the given graph is correct, how many other graphs share the same number of LMC violations? Since the graph is assumed to be correct, the correct LMCs are those that are implied by the graph and hence the reference number of violations is zero. For a significance value of 0.05, if less than 5% of random graphs have zero LMC violations, then it indicates that the LMCs implied by the graph can falsify (or refute) the graph.
 """
-        client = OpenAI()
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "You are an expert in the causal discovery field and helpful assistant."},
-                {"role": "user", "content": prompt}
-            ]
+        client = LLMClient(self.args)
+        response = client.chat_completion(
+            prompt=prompt,
+            system_prompt="You are a helpful assistant for graph refutation.",
+            json_response=False
         )
-        response_doc = response.choices[0].message.content
+        response_doc = response
 
         return response_doc  
 

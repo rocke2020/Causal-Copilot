@@ -1,7 +1,7 @@
 import json
 import torch
 import algorithm.wrappers as wrappers
-from algorithm.llm_client import LLMClient
+from llm import LLMClient
 from .context.algos.utils.json2txt import create_filtered_benchmarking_results, create_filtered_benchmarking_results_ts 
 
 class HyperparameterSelector:

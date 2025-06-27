@@ -4,12 +4,12 @@ import pandas as pd
 from typing import Dict, Any, Tuple, List
 from .dummy import DataSimulator
 import networkx as nx
-from openai import OpenAI
+from llm import LLMClient
 
 class SimulationManager:
     def __init__(self, args):
         self.args = args
-        self.client = OpenAI()
+        self.client = LLMClient(args)
         self.base_simulator = DataSimulator()
 
     def generate_simulation_config(self) -> Dict[str, Any]:
@@ -17,15 +17,12 @@ class SimulationManager:
         Use LLM to generate a simulation configuration.
         """
         prompt = self._load_simulation_prompt()
-        response = self.client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "You are an expert in data simulation for scientific research. Provide your response in JSON format."},
-                {"role": "user", "content": prompt}
-            ],
-            response_format={"type": "json_object"}
+        response = self.client.chat_completion(
+            prompt=prompt,
+            system_prompt="You are an expert in data simulation for scientific research. Provide your response in JSON format.",
+            json_response=True
         )
-        return json.loads(response.choices[0].message.content)
+        return response
 
     def _load_simulation_prompt(self) -> str:
         with open('data/simulation/context/simulation.txt', 'r') as f:

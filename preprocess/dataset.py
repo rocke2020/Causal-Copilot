@@ -86,8 +86,8 @@ def knowledge_info(args, global_state):
     :param global_state: GlobalState
     :return: GlobalState
     '''
-    from openai import OpenAI
-    client = OpenAI()
+    from llm import LLMClient
+    client = LLMClient(args)
     data = global_state.user_data.processed_data
     table_name = args.data_file
     table_columns = '\t'.join(data.columns._data)
@@ -117,18 +117,16 @@ def knowledge_info(args, global_state):
               "20. PERIODICITY: Cyclical patterns or periodicities in the data generating process\n\n"
               "Please organize your response by these numbered sections, with clear headings and concise, informative content in each section."
               ) % (table_name, table_columns)
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": "You are a domain expert specializing in causal inference across multiple fields. Analyze dataset variables to extract comprehensive domain knowledge that would help with causal discovery. For each aspect, provide specific insights rather than generic descriptions. If variable names aren't meaningful (e.g., x1, y1), clearly state 'No Knowledge' but suggest what information would be needed from domain experts."},
-            {"role": "user", "content": prompt}
-        ]
+    response = client.chat_completion(
+        prompt=prompt,
+        system_prompt="You are an expert in the causal discovery field and helpful assistant.",
+        json_response=False
     )
-    knowledge_doc = response.choices[0].message.content
-    knowledge_docs = [knowledge_doc]
+    response_doc = response
+    knowledge_docs = [response_doc]
     global_state.user_data.knowledge_docs = knowledge_docs
     
-    client2 = OpenAI()
+    client2 = LLMClient(args)
     prompt2 = ("I will conduct causal discovery on the Dataset %s containing the following Columns: \n\n"
               "%s\n\nPlease provide comprehensive domain knowledge about this data. If variable names are meaningful, analyze in detail. If they're just symbols (like x1, y1), respond with 'No Knowledge'.\n\n"
               "Please cover these aspects with clear structure:\n\n"
@@ -136,14 +134,12 @@ def knowledge_info(args, global_state):
               "2. CAUSAL RELATIONSHIPS: Potential direct and indirect causal connections between variables based on domain expertise\n\n"
               "3. RELATIONSHIP NATURE: Are relationships primarily linear or nonlinear? Explain with examples\n\n"
               ) % (table_name, table_columns)
-    response2 = client2.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": "You are a domain expert specializing in causal inference across multiple fields. Analyze dataset variables to extract comprehensive domain knowledge that would help with causal discovery. "},
-            {"role": "user", "content": prompt2}
-        ]
+    response2 = client2.chat_completion(
+        prompt=prompt2,
+        system_prompt="You are a domain expert specializing in causal inference across multiple fields. Analyze dataset variables to extract comprehensive domain knowledge that would help with causal discovery.",
+        json_response=False
     )
-    knowledge_doc_for_user = response2.choices[0].message.content
+    knowledge_doc_for_user = response2
     knowledge_docs_for_user = [knowledge_doc_for_user]
     print(knowledge_docs_for_user)
     global_state.user_data.knowledge_docs_for_user = knowledge_docs_for_user

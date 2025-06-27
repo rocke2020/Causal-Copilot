@@ -4,6 +4,7 @@ import os
 import sklearn.linear_model
 import sklearn.ensemble
 import sklearn.svm
+from llm import LLMClient
 
 # Class to get models in DML two stages suggested by LLM
 class HTE_Param_Selector(object):
@@ -171,8 +172,7 @@ class HTE_Param_Selector(object):
         :param global_state: The global state containing the processed data, selected algorithm, statistics description, and knowledge documents
         :return: A doc containing the selected algorithm and its hyperparameter settings
         '''
-        from openai import OpenAI
-        client = OpenAI()
+        client = LLMClient(self.args)
         # Set up the Hyperparameters
         # Load hyperparameters prompt template
         y_prompt, discrete_y = self.prompt_generation(self.y_col, global_state)

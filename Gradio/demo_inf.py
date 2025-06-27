@@ -83,7 +83,7 @@ from postprocess.visualization import Visualization, convert_to_edges
 from causal_analysis.inference import Analysis
 from report.report_generation import Report_generation
 from user.discuss import Discussion
-from openai import OpenAI
+from llm import LLMClient
 from pydantic import BaseModel
 from causal_analysis.help_functions import *
 from Gradio.help_functions import *

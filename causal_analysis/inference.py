@@ -15,7 +15,7 @@ import shap
 import sklearn
 import matplotlib.pyplot as plt
 import seaborn as snscl
-from openai import OpenAI
+from llm import LLMClient
 from pydantic import BaseModel
 import os
 import sys
@@ -863,11 +863,11 @@ class Analysis(object):
         self.global_state = reranker.forward(self.global_state)
 
         # Step 6: Create and fit model
-        print(f"[DEBUG] treatment column name: {treatment}, T0: {T0}, T1: {T1}")
+        # print(f"[DEBUG] treatment column name: {treatment}, T0: {T0}, T1: {T1}")
         assert isinstance(treatment, str), f"❌ treatment must be str, got {type(treatment)}"
         assert treatment in self.data.columns, f"❌ Column '{treatment}' not found in data columns"
-        print(f"[DEBUG] Final T_col = {treatment}")
-        print(f"[DEBUG] Columns in data: {self.data.columns.tolist()}")
+        # print(f"[DEBUG] Final T_col = {treatment}")
+        # print(f"[DEBUG] Columns in data: {self.data.columns.tolist()}")
 
         programmer = DML_HTE_Programming(self.args, y_col=outcome, T_col=treatment, T0=T0, T1=T1, X_col=X_col, W_col=W_col)
         programmer.fit_model(self.global_state)
@@ -934,11 +934,11 @@ class Analysis(object):
         self.global_state = reranker.forward(self.global_state)
 
         # Step 6: Initialize and fit model
-        print(f"[DEBUG] treatment column name: {treatment}, T0: {T0}, T1: {T1}")
+        # print(f"[DEBUG] treatment column name: {treatment}, T0: {T0}, T1: {T1}")
         assert isinstance(treatment, str), f"❌ treatment must be str, got {type(treatment)}"
         assert treatment in self.data.columns, f"❌ Column '{treatment}' not found in data columns"
-        print(f"[DEBUG] Final T_col = {treatment}")
-        print(f"[DEBUG] Columns in data: {self.data.columns.tolist()}")
+        # print(f"[DEBUG] Final T_col = {treatment}")
+        # print(f"[DEBUG] Columns in data: {self.data.columns.tolist()}")
 
         programmer = DRL_HTE_Programming(self.args, y_col=outcome, T_col=treatment, T0=T0, T1=T1, X_col=X_col, W_col=W_col)
         programmer.fit_model(self.global_state)
@@ -1655,7 +1655,7 @@ if __name__ == '__main__':
     # # #                                 X_col=['age', 'nodegr'], 
     # # #                                 W_col=['educ', 'age', 'married', 'nodegr'], 
     # # #                                 query='What is the treatment effect of treat on re78')
-    # # my_analysis.feature_importance(target_node='re78', linearity=False, visualize=True)
+    # my_analysis.feature_importance(target_node='re78', linearity=False, visualize=True)
     # # #my_analysis.simulate_intervention(treatment_name = 'married', response_name = 're78', shift_intervention_val =1)
     # with open('./demo_data/20250130_130622/house_price/output_graph/PC_global_state.pkl', 'rb') as file:
     #     global_state = pickle.load(file)

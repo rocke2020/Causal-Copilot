@@ -1,7 +1,7 @@
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from openai import OpenAI
+from llm import LLMClient
 import re
 import numpy as np 
 from plumbum.cmd import latexmk
@@ -18,7 +18,7 @@ class Inference_Report_generation(object):
         """
         self.global_state = global_state
         self.args = args 
-        self.client = OpenAI()
+        self.client = LLMClient(args)
         self.statistics_desc = global_state.statistics.description
         self.knowledge_docs = global_state.user_data.knowledge_docs[0]
         # Data info
@@ -175,7 +175,7 @@ class Inference_Report_generation(object):
         {self.task_info['desc'][0]}
         Write a 1-2 paragraphs explanation of the Abnormality Attribution method we use.
         **Mehtodology:**
-        In this method, we use invertible causal mechanisms to reconstruct and modify the noise leading to a certain observation. We then ask, “If the noise value of a specific node was from its ‘normal’ distribution, would we still have observed an anomalous value in the target node?”. The change in the severity of the anomaly in the target node after altering an upstream noise variable’s value, based on its learned distribution, indicates the node’s contribution to the anomaly. The advantage of using the noise value over the actual node value is that we measure only the influence originating from the node and not inherited from its parents.
+        In this method, we use invertible causal mechanisms to reconstruct and modify the noise leading to a certain observation. We then ask, "If the noise value of a specific node was from its 'normal' distribution, would we still have observed an anomalous value in the target node?" The change in the severity of the anomaly in the target node after altering an upstream noise variable's value, based on its learned distribution, indicates the node's contribution to the anomaly. The advantage of using the noise value over the actual node value is that we measure only the influence originating from the node and not inherited from its parents.
         """
         method = LLM_parse_query(self.client, None, 'You are an expert in Causal Discovery.', prompt)
         response = self.task_info['result']['Feature Importance']['response']

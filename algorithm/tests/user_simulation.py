@@ -5,7 +5,7 @@ import json
 import pandas as pd
 import numpy as np
 import random  # Added to support diverse, randomized fallback generation
-from openai import OpenAI
+from llm import LLMClient
 import argparse
 
 BASE_MODEL = "gpt-4o"
@@ -45,16 +45,13 @@ def simulate_user_query(args):
     meta_prompt = meta_prompt.replace("[application_fields]", json.dumps(application_fields))
     meta_prompt = meta_prompt.replace("[num_users]", str(args.num_users))
 
-    client = OpenAI()
+    client = LLMClient(args)
     
     # Call the LLM using the meta-prompt to simulate a user query and statistics
-    response = client.chat.completions.create(
-         model=BASE_MODEL,
-         messages=[
-             {"role": "system", "content": meta_prompt},
-             {"role": "user", "content": "Please generate a JSON object with the required keys as specified."}
-         ],
-         temperature=1.0
+    response = client.chat_completion(
+        prompt=meta_prompt,
+        system_prompt="You are a helpful assistant for simulating user queries.",
+        json_response=True
     )
     
     # Extract the response content (this is expected to be a JSON string representing an array of simulations)

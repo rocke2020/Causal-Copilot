@@ -10,6 +10,7 @@ import torch
 from datetime import datetime
 from global_setting.state import GlobalState
 from data.simulation.simulation import SimulationManager
+from llm import LLMClient
 
 
 
@@ -112,15 +113,13 @@ def global_state_initialization(args: argparse.Namespace = None) -> GlobalState:
     global_state.user_data.initial_query = user_query
 
     # Extract information from user queries
-    from openai import OpenAI
-    
     # get all available algorithms
     algorithms = [algo.split('.')[0] for algo in os.listdir('algorithm/context/algos') if algo.endswith('.txt') and 'tagging' not in algo and 'guideline' not in algo]  
     algorithms = ', '.join(algorithms)
 
     print(algorithms)
 
-    client = OpenAI()
+    client = LLMClient(args)
     prompt = (f"Based on the query that I provided: {user_query} \n\n; "
               "extract the following information and summarize them in a json format, and output this json object."
               "Within the output, the key, the corresponding value options and their meanings are: \n\n "
@@ -155,18 +154,12 @@ def global_state_initialization(args: argparse.Namespace = None) -> GlobalState:
               "the value for such key should be set to None! \n\n"
               "Just give me the output in a json format, do not provide other information! \n\n")
 
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        response_format={"type": "json_object"},
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": prompt}
-        ]
+    response = client.chat_completion(
+        prompt=prompt,
+        system_prompt="You are a helpful assistant.",
+        json_response=True
     )
-
-    # The output from GPT is str
-    info_extracted = response.choices[0].message.content
-    info_extracted = json.loads(info_extracted)
+    info_extracted = response
 
     # data management
     if args.demo_mode:
@@ -183,6 +176,8 @@ def global_state_initialization(args: argparse.Namespace = None) -> GlobalState:
     global_state.statistics.gaussian_error = info_extracted["gaussian_error"]
     global_state.statistics.heterogeneous = info_extracted["heterogeneous"]
     global_state.statistics.domain_index = info_extracted["domain_index"]
+    if global_state.statistics.domain_index is not None and global_state.statistics.domain_index not in global_state.user_data.raw_data.columns:
+        global_state.statistics.domain_index = None
     global_state.algorithm.selected_algorithm = info_extracted["selected_algorithm"]
     global_state.statistics.time_series = info_extracted["time_series"]
     # GPU availability

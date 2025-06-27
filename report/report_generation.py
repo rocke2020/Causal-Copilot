@@ -1,7 +1,7 @@
 import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-from openai import OpenAI
+from llm import LLMClient
 import re
 from pydantic import BaseModel
 from typing import List, Dict, Tuple, Optional
@@ -94,7 +94,7 @@ class Report_generation(object):
         #         inference_global_state = state
         #         break
 
-        self.client = OpenAI()
+        self.client = LLMClient(args)
         if global_state.user_data.meaningful_feature:
             self.data_mode = 'real'
         else:
@@ -129,15 +129,12 @@ class Report_generation(object):
         self.visual_dir = global_state.user_data.output_graph_dir
 
     def get_title(self):
-        response_title = self.client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": f"You are a helpful assistant, please give me the name of the given dataset {self.data_file}\n"
-                                                "For example, if the dataset is Sachs.csv, then return me with 'Sachs'. If the dataset is a directory called Abalone, then return me with 'Abalone'.\n"
-                                                "Only give me the string of name, do not include anything else."},
-            ]
+        response_title = self.client.chat_completion(
+            prompt=f"You are a helpful assistant, please give me the name of the given dataset {self.data_file}\nFor example, if the dataset is Sachs.csv, then return me with 'Sachs'. If the dataset is a directory called Abalone, then return me with 'Abalone'.\nOnly give me the string of name, do not include anything else.",
+            system_prompt=None,
+            json_response=False
         )
-        dataset = response_title.choices[0].message.content
+        dataset = response_title
         dataset = dataset.replace('_', ' ')
         title = f'Causal Discovery Report on {dataset.capitalize()}'
         return title, dataset
@@ -152,14 +149,12 @@ class Report_generation(object):
         """
     
         print("Start to find Introduction")
-        response_dist = self.client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "You are an expert in the causal discovery field and helpful assistant."},
-                {"role": "user", "content": prompt}
-            ]
+        response_dist = self.client.chat_completion(
+            prompt=prompt,
+            system_prompt="You are an expert in the causal discovery field and helpful assistant.",
+            json_response=False
         )
-        response_intro = response_dist.choices[0].message.content
+        response_intro = response_dist
         response_intro = response_intro.replace("_", r"\_")
         return response_intro
     
@@ -178,14 +173,12 @@ class Report_generation(object):
         """
     
         print("Start to find Background")
-        response_background = self.client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "You are an expert in the causal discovery field and helpful assistant."},
-                {"role": "user", "content": prompt}
-            ]
+        response_background = self.client.chat_completion(
+            prompt=prompt,
+            system_prompt="You are an expert in the causal discovery field and helpful assistant.",
+            json_response=False
         )
-        section1 = response_background.choices[0].message.content
+        section1 = response_background
         section1 = re.sub(r'.*\*\*(.*?)\*\*', r'\\textbf{\1}', section1)       
         section1 = list_conversion(section1)
         section1 = fix_latex_itemize(section1)
@@ -582,14 +575,12 @@ The following figure presents distributions of various variables. The orange das
             The result graph shows the causal relationship among variables clearly. The {variables[1]} causes the {variables[0]}, ...
             """
             print("Start to find graph effect")
-            response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role": "system", "content": "You are an expert in the causal discovery field and helpful assistant."},
-                    {"role": "user", "content": prompt}
-                ]
+            response = self.client.chat_completion(
+                prompt=prompt,
+                system_prompt="You are an expert in the causal discovery field and helpful assistant.",
+                json_response=False
             )
-            response_doc = response.choices[0].message.content
+            response_doc = response
             # response_doc = response_doc.replace('_', ' ')
         return response_doc
 
@@ -768,14 +759,12 @@ The following figure presents distributions of various variables. The orange das
             3. The list must be in latex format
             """
             print("Start to analyze graph reliability")
-            response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role": "system", "content": "You are an expert in the causal discovery field and helpful assistant."},
-                    {"role": "user", "content": prompt}
-                ]
+            response = self.client.chat_completion(
+                prompt=prompt,
+                system_prompt="You are an expert in the causal discovery field and helpful assistant.",
+                json_response=False
             )
-            response_doc = response.choices[0].message.content
+            response_doc = response
             response_doc = response_doc.replace('%', '\%')
             response_doc = response_doc.replace('_', ' ')
             #print('reliability analysis:',response_doc)
@@ -839,109 +828,48 @@ Help me to write a comparison of the following causal discovery results of diffe
                 prompt += f"Result of Algorithm {state.algorithm.selected_algorithm}:\n"            
                 relation_text_dict, relation_text = edges_to_relationship(self.data, state.results.raw_edges)
                 prompt += f"{relation_text}\n"
-            response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role": "system",
-                     "content": 
-                     f"""
-                     You are an expert in the causal discovery field and helpful assistant.                    
-                     """},
-                    {"role": "user", "content": prompt}
-                ]
+            response = self.client.chat_completion(
+                prompt=prompt,
+                system_prompt="You are an expert in the causal discovery field and helpful assistant.",
+                json_response=False
             )
-            response_doc = response.choices[0].message.content
+            response_doc = response
             response_doc = response_doc.replace("_", r"\_")
             response_doc = bold_conversion(response_doc)
             return graph_text, response_doc
         
     def abstract_prompt(self):
-        response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role": "system",
-                     "content": 
-                     f"""
-                     You are an expert in the causal discovery field and helpful assistant.                    
-                     """},
-                    {"role": "user", "content": 
-                     f"""
-                     Help me to write a short abstract according to the given information. 
-                     You should cover what data is analyzed (find it in title and introduction), what methodology we used, what result we got, and what is our contribution.
-                     Only include your abstract text content in the response. Don't include any other things like title, etc.
-                     Do not include any Greek Letters, Please change any Greek Letter into Math Mode, for example, you should change γ into $\gamma$
-                     0. Title: {self.title}
-                     1. Introduction: {self.intro_info}
-                     2. Selected Algorithm: {self.algo}
-                     3. Discovery Procedure: {self.discover_process},
-                     4. Graph Result Analysis: {self.graph_prompt},
-                     5. Reliability Analysis: {self.reliability_prompt}
-                     6. Comparision of different algorithms: {self.result_comparison}
-                     7. Inference Analysis: {self.inf_report}
-                     """}
-                ]
-            )
-
-        response_doc = response.choices[0].message.content
+        response = self.client.chat_completion(
+            prompt="""
+            Write an abstract for a causal discovery report. Summarize the dataset, methodology, and key findings in 3-5 sentences. Only include the abstract text in the response. Don't include any title or extra formatting.
+            """,
+            system_prompt="You are an expert in the causal discovery field and helpful assistant.",
+            json_response=False
+        )
+        response_doc = response
         response_doc = response_doc.replace("_", r"\_")
         return response_doc
-    
+
     def keyword_prompt(self):
-        response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role": "system",
-                     "content": 
-                     """
-                     You are an expert in the causal discovery field and helpful assistant.                    
-                     """},
-                    {"role": "user", "content": 
-                     f"""
-                     Give me some keywords according to the given information, and these keywords are for an academic report.
-                    You should seperate each keywords with a comma, like 'keyword1, keyword2, keyword3'.
-                     Only include your keywords text in the response. Don't include any other things.
-                     Only include 5 most important key words.
-                     0. Title: {self.title}
-                     1. Abstract: {self.abstract}
-                     1. Introduction: {self.intro_info}
-                     """}
-                ]
-            )
-
-        response_doc = response.choices[0].message.content
+        response = self.client.chat_completion(
+            prompt=f"""
+            Give me some keywords according to the given information, and these keywords are for an academic report. You should separate each keyword with a comma, like 'keyword1, keyword2, keyword3'. Only include your keywords text in the response. Don't include any other things. Only include 5 most important key words. 0. Title: {self.title} 1. Abstract: {self.abstract} 1. Introduction: {self.intro_info}
+            """,
+            system_prompt="You are an expert in the causal discovery field and helpful assistant.",
+            json_response=False
+        )
+        response_doc = response
         return response_doc
-    
-    def conclusion_prompt(self):
-        response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role": "system",
-                     "content": 
-                     f"""
-                     You are an expert in the causal discovery field and helpful assistant.                    
-                     """},
-                    {"role": "user", "content": 
-                     f"""
-                     Help me to write a 1-2 paragraphs conclusion according to the given information. 
-                     You should cover:
-                      1. what data is analyzed (find it in title and introduction)
-                      2. what methodology we used (find it in Discovery Procedure)
-                      3. what result we got, this point is important (find it in Graph Result Analysis and Graph Revise Procesure)
-                      4. what is our contribution, this point is important (summarize it by yourself)
-                     Only include your conclusion text content in the response. Don't include any other things like title, etc.
-                     0. Title: {self.title}
-                     1. Introduction: {self.intro_info}
-                     2. Discovery Procedure: {self.discover_process},
-                     3. Graph Result Analysis: {self.graph_prompt},
-                     4. Graph Revise Procesure: {self.revise_process}
-                     5. Reliability Analysis: {self.reliability_prompt}
-                     6. Comparision of different algorithms: {self.result_comparison}
-                     7. Inference Analysis: {self.inf_report}
-                     """}
-                ]
-            )
 
-        response_doc = response.choices[0].message.content
+    def conclusion_prompt(self):
+        response = self.client.chat_completion(
+            prompt=f"""
+            Help me to write a 1-2 paragraphs conclusion according to the given information. You should cover: 1. what data is analyzed (find it in title and introduction) 2. what methodology we used (find it in Discovery Procedure) 3. what result we got, this point is important (find it in Graph Result Analysis and Graph Revise Procedure) 4. what is our contribution, this point is important (summarize it by yourself) Only include your conclusion text content in the response. Don't include any other things like title, etc. 0. Title: {self.title} 1. Introduction: {self.intro_info} 2. Discovery Procedure: {self.discover_process}, 3. Graph Result Analysis: {self.graph_prompt}, 4. Graph Revise Procedure: {self.revise_process} 5. Reliability Analysis: {self.reliability_prompt} 6. Comparison of different algorithms: {self.result_comparison} 7. Inference Analysis: {self.inf_report}
+            """,
+            system_prompt="You are an expert in the causal discovery field and helpful assistant.",
+            json_response=False
+        )
+        response_doc = response
         response_doc = response_doc.replace("_", r"\_")
         return response_doc
     
@@ -961,14 +889,12 @@ Help me to write a comparison of the following causal discovery results of diffe
         This is the text you need to convert: {text}
         Only response converted text, please do not include other things like 'Here is the converted text in LaTeX format:'
         """
-        response = self.client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "You are an expert in the causal discovery field and helpful assistant."},
-                {"role": "user", "content": prompt}
-            ]
+        response = self.client.chat_completion(
+            prompt=prompt,
+            system_prompt="You are an expert in the causal discovery field and helpful assistant.",
+            json_response=False
         )
-        response_doc = response.choices[0].message.content
+        response_doc = response
         return response_doc
 
     def generation(self, debug=False):
@@ -1101,18 +1027,16 @@ Help me to write a comparison of the following causal discovery results of diffe
             with open(tex_path, 'r', encoding='utf-8') as file:
                 tex_content = file.read()
             if check_output:
-                response = self.client.chat.completions.create(
-                model="gpt-4o-mini",
+                response = self.client.chat_completion(
+                prompt=f"""
+                You are a helpful debugging assistant, help me to fix bugs in the latex report I will give you. 
+                1. Please fix the LaTeX errors guided by the output of `chktek`:
+                    {check_output}.
+                ** YOU SHOULD **
+                 1. Make the minimal fix required and do not change any other contents!
+                 2. Only include your latex content in the response which can be rendered to pdf directly. Don't include other things like '''latex '''
+                """,
                 messages=[
-                    {"role": "system",
-                     "content": f"""
-                     You are a helpful debugging assistant, help me to fix bugs in the latex report I will give you. 
-                     1. Please fix the LaTeX errors guided by the output of `chktek`:
-                        {check_output}.
-                    ** YOU SHOULD **
-                     1. Make the minimal fix required and do not change any other contents!
-                     2. Only include your latex content in the response which can be rendered to pdf directly. Don't include other things like '''latex '''
-                     """},
                     {"role": "user", "content": tex_content}
                 ]
                 )

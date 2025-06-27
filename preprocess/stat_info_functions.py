@@ -25,7 +25,7 @@ from statsmodels.tsa.stattools import acf, pacf
 from scipy.stats import mode
 from scipy.signal import find_peaks
 import json
-from openai import OpenAI
+from llm import LLMClient
 # from Gradio.demo import global_state
 
 # new package
@@ -131,19 +131,17 @@ def drop_greater_miss_50_feature(global_state):
 def llm_select_dropped_features(global_state):
     ratio_between_05_03 = [k for k, v in global_state.statistics.miss_ratio.items() if 0.5 > v >= 0.3]
 
-    client = OpenAI()
+    client = LLMClient()
     prompt = (f'Given the list of features of a dataset: {global_state.user_data.selected_features} \n\n,'
               f'which features listed below do you think may be potential confounders: \n\n {ratio_between_05_03}?'
               'Your response should be given in a list format, and the name of features should be exactly the same as the feature names I gave.'
               'You only need to give me the list of features, no other justifications are needed. If there are no features you think should be potential confounder,'
               'just give me an empty list.')
 
-    response = client.chat.completions.create(
-        model="gpt-4o-mini",
-        messages=[
-            {"role": "system", "content": "You are a helpful assistant."},
-            {"role": "user", "content": prompt}
-        ]
+    response = client.chat_completion(
+        prompt=prompt,
+        system_prompt="You are a helpful assistant for statistical info functions.",
+        json_response=True
     )
     llm_select_feature = response.choices[0].message.content
     llm_select_feature = llm_select_feature.replace('```json', '').replace('```', '').strip()
@@ -152,6 +150,17 @@ def llm_select_dropped_features(global_state):
     llm_drop_keep_important = [element for element in llm_drop_feature if
                                element not in global_state.user_data.important_features]  # keep important features
     global_state.user_data.llm_drop_features = llm_drop_keep_important
+
+    # After extracting info_extracted["domain_index"] from LLM
+    global_state.statistics.domain_index = info_extracted["domain_index"]
+
+    # Robust check: only keep if it's a real column, else set to None
+    if (
+        global_state.statistics.domain_index is not None and
+        global_state.statistics.domain_index not in global_state.user_data.raw_data.columns
+    ):
+        print(f"[DEBUG] domain_index '{global_state.statistics.domain_index}' not found in data columns. Setting to None.")
+        global_state.statistics.domain_index = None
 
     return global_state
 
@@ -495,7 +504,7 @@ def linearity_check (df_raw: pd.DataFrame, global_state):
         results = model.fit()
         models.append((results, test_pairs[i]))
 
-        # Ramsey’s RESET - H0: linearity is satisfied
+        # Ramsey's RESET - H0: linearity is satisfied
         reset_test = linear_reset(results, power=2)
         pval.append(reset_test.pvalue)
 
@@ -779,15 +788,14 @@ def stat_info_collection(global_state):
     :param global_state: GlobalState object to update and use.
     :return: updated GlobalState object.
     '''
-    print("[DEBUG] Entered stat_info_collection")
+    # print("[DEBUG] Entered stat_info_collection")
     if global_state.statistics.heterogeneous and global_state.statistics.domain_index is not None:
-        # Drop the domain index column from the data
         domain_index = global_state.statistics.domain_index
-        col_domain_index = global_state.user_data.raw_data[domain_index]
-        if domain_index in global_state.user_data.selected_features:
-            # global_state.user_data.selected_features = global_state.user_data.selected_features.drop(domain_index)
-             global_state.user_data.selected_features = [f for f in global_state.user_data.selected_features if f != domain_index]
-
+        if domain_index in global_state.user_data.raw_data.columns:
+            col_domain_index = global_state.user_data.raw_data[domain_index]
+        else:
+            print(f"[WARNING] domain_index '{domain_index}' not found in data columns. Skipping domain index handling.")
+            col_domain_index = None
     else:
         col_domain_index = None
         
@@ -815,17 +823,17 @@ def stat_info_collection(global_state):
 
     # Data pre-processing
     each_type, dataset_type = data_preprocess(clean_df = data, ts=global_state.statistics.time_series)
-    print("[DEBUG] Done with data_preprocess")
+    # print("[DEBUG] Done with data_preprocess")
 
     # Update global state
     global_state.statistics.data_type = dataset_type["Data Type"]
     global_state.statistics.data_type_column = each_type
 
-    print("[DEBUG] Done with updating global state")
-    print(global_state.statistics.heterogeneous)
-    print(global_state.statistics.domain_index)
-    print(global_state.user_data.visual_selected_features)
-    print(global_state.statistics.time_series)
+    # print("[DEBUG] Done with updating global state")
+    # print(global_state.statistics.heterogeneous)
+    # print(global_state.statistics.domain_index)
+    # print(global_state.user_data.visual_selected_features)
+    # print(global_state.statistics.time_series)
 
 
     # Imputation
@@ -846,12 +854,12 @@ def stat_info_collection(global_state):
     if global_state.statistics.data_type == "Continuous":
         if global_state.statistics.linearity is None:
             # Update global state
-            print("[DEBUG] About to run linearity_check")
+            # print("[DEBUG] About to run linearity_check")
             global_state = linearity_check(df_raw=imputed_data, global_state=global_state)
             
         if global_state.statistics.gaussian_error is None:
             # Update global state
-            print("[DEBUG] Entering gaussian_check")
+            # print("[DEBUG] Entering gaussian_check")
             global_state = gaussian_check(df_raw=imputed_data, global_state=global_state)
     # Assumption checking for time-series data
     elif global_state.statistics.data_type=="Time-series":
@@ -877,7 +885,7 @@ def stat_info_collection(global_state):
 
     # Convert statistics to JSON for compatibility with existing code
     # stat_info_json = json.dumps(vars(global_state.statistics), indent=4)
-    print("[DEBUG] Exit stat_info_collection")
+    # print("[DEBUG] Exit stat_info_collection")
     return global_state
 
 

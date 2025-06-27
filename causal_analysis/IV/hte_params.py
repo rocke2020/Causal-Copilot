@@ -4,6 +4,7 @@ import os
 import sklearn.linear_model
 import sklearn.ensemble
 import sklearn.svm
+from llm import LLMClient
 
 # Class to get models in IV two stages suggested by LLM
 class HTE_Param_Selector(object):
@@ -43,18 +44,12 @@ class HTE_Param_Selector(object):
         return prompt
     
     def model_suggestion(self, client, prompt):
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "You are a causal discovery expert. Provide your response in JSON format."},
-                {"role": "user", "content": prompt}
-            ],
-            response_format={"type": "json_object"}
+        response = client.chat_completion(
+            prompt=prompt,
+            system_prompt="You are a helpful assistant for IV hte_params.",
+            json_response=True
         )
-
-        print("Model Response: ", response.choices[0].message.content)
-        model_suggest_json = json.loads(response.choices[0].message.content)
-        return model_suggest_json
+        return response
     
     def get_model(self, model_name, **kwargs):
         if hasattr(sklearn.linear_model, model_name):
@@ -175,8 +170,7 @@ class HTE_Param_Selector(object):
         :param global_state: The global state containing the processed data, selected algorithm, statistics description, and knowledge documents
         :return: A doc containing the selected algorithm and its hyperparameter settings
         '''
-        from openai import OpenAI
-        client = OpenAI()
+        client = LLMClient(self.args)
         # Set up the Hyperparameters
         # Load hyperparameters prompt template
         import json

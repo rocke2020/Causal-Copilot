@@ -19,6 +19,19 @@ load_dotenv()
 
 import os
 
+# Test configurations
+OPENAI_CONFIG = {
+    'llm_provider': 'openai',
+    'model_name': 'gpt-4o-mini',
+    'api_key': os.getenv('OPENAI_API_KEY')
+}
+
+OLLAMA_CONFIG = {
+    'llm_provider': 'ollama',
+    'model_name': 'llama2',
+    'base_url': 'http://localhost:11434'
+}
+
 def parse_args():
     parser = argparse.ArgumentParser(description='Causal Learning Tool for Data Analysis')
 
@@ -26,7 +39,8 @@ def parse_args():
     parser.add_argument(
         '--data-file',
         type=str,
-        default= "simulated_data/default/data.csv",
+        # default= "simulated_data/default/data.csv",
+        default= "dataset/Abalone/Abalone.csv",
         help='Path to the input dataset file (e.g., CSV format or directory location)'
     )
 
@@ -34,7 +48,8 @@ def parse_args():
     parser.add_argument(
         '--output-report-dir',
         type=str,
-        default='dataset/sim_ts/output_report/',
+        # default='dataset/sim_ts/output_report/',
+        default='output/Abalone',
         help='Directory to save the output report'
     )
 
@@ -42,7 +57,8 @@ def parse_args():
     parser.add_argument(
         '--output-graph-dir',
         type=str,
-        default='dataset/sim_ts/output_graph/',
+        # default='dataset/sim_ts/output_graph/',
+        default='output/Abalone',
         help='Directory to save the output graph'
     )
 
@@ -86,6 +102,20 @@ def parse_args():
         type=bool,
         default=False,
         help='Demo mode'
+    )
+
+    parser.add_argument(
+        '--llm_provider',
+        type=str,
+        default='openai',
+        help='LLM provider to use: openai or ollama'
+    )
+
+    parser.add_argument(
+        '--model_name',
+        type=str,
+        default=None,
+        help='Model name to use for the LLM provider (e.g., gpt-4o-mini, llama2, llama3.2)'
     )
 
     args = parser.parse_args()

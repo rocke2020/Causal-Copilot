@@ -1,4 +1,4 @@
-from openai import OpenAI
+from llm import LLMClient
 import json
 import os
 
@@ -6,7 +6,7 @@ import os
 class HTE_Filter(object):
     def __init__(self, args):
         self.args = args
-        self.client = OpenAI()
+        self.client = LLMClient(args)
 
     def load_algo_context(self):
         return open(f"causal_analysis/DRL/context/hte_algo.txt", "r").read()
@@ -43,18 +43,12 @@ class HTE_Filter(object):
     def forward(self, global_state, query):
         prompt = self.create_prompt(global_state.user_data.processed_data, global_state.statistics.description, query)
 
-        response = self.client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system",
-                 "content": "You are a causal discovery expert. Provide your response in JSON format."},
-                {"role": "user", "content": prompt}
-            ],
-            response_format={"type": "json_object"}
+        response = self.client.chat_completion(
+            prompt=prompt,
+            system_prompt="You are a helpful assistant for DRL hte_filter.",
+            json_response=True
         )
-
-        output = response.choices[0].message.content
-        hte_algo = self.parse_response(output)
+        hte_algo = self.parse_response(response)
         print('hte algo response:', hte_algo)
 
         global_state.inference.hte_algo_json = hte_algo

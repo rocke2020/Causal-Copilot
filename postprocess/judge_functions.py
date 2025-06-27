@@ -2,7 +2,7 @@ import numpy as np
 from sympy.stats.rv import probability
 import ast
 import json 
-from openai import OpenAI
+from llm import LLMClient
 from postprocess.visualization import Visualization
 from collections import Counter
 import networkx as nx
@@ -264,48 +264,33 @@ def bootstrap_recommend(raw_graph, boot_edges_prob):
 
 
 def get_json(args, prompt):
-        client = OpenAI()
-        response = client.chat.completions.create(
-                model="gpt-4o-mini",
-                messages=[
-                    {"role": "system", "content": "You are a helpful assistant."},
-                    {"role": "user", "content": prompt}
-                ]
-            )
-        jsons = response.choices[0].message.content
-        jsons_cleaned = jsons.replace('```json', '').replace('```', '').strip()
-        try:
-            jsons_cleaned = json.loads(jsons_cleaned)
-        except:
-            print('The returned LLM JSON file is wrong, try again')
-            jsons_cleaned = get_json(args,prompt)
-        return jsons_cleaned
+    client = LLMClient(args)
+    response = client.chat_completion(
+        prompt=prompt,
+        system_prompt="You are a helpful assistant.",
+        json_response=True
+    )
+    return response
 
 def call_llm_new(args, prompt, prompt_type):
     with open('postprocess/context/COT_prompt.txt', 'r') as file:
         cot_context = file.read()
     
-    # initiate a client
-    client = OpenAI()
-    client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": "You are an expert in Causal Discovery."}])
+    client = LLMClient(args)
+    
     if 'cot' in prompt_type:
-        client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "system", "content": cot_context}])
+        system_prompt = cot_context
+    else:
+        system_prompt = "You are an expert in Causal Discovery."
 
-    # get response          
-    response = client.chat.completions.create(
-            model="gpt-4o",
-            messages=[
-                {"role": "user", "content": prompt}])
-    contents = response.choices[0].message.content
+    response = client.chat_completion(
+        prompt=prompt,
+        system_prompt=system_prompt
+    )
+    
     # parse response
     llm_answer = {}
-    lines = contents.split('\n')
+    lines = response.split('\n')
     lines = [line for line in lines if line.startswith('(')]
     for line in lines:
         try:
@@ -553,21 +538,17 @@ def edges_to_relationship(data, edges_dict, boot_edges_prob=None):
 
 
 def LLM_remove_cycles(args, message):
-    client = OpenAI()
+    client = LLMClient(args)
     class VarList(BaseModel):
         nodes: list[str]
     
-    completion = client.beta.chat.completions.parse(
-    model="gpt-4o-mini-2024-07-18",
-    messages=[
-        {"role": "system", "content": f"You are a helpful assistant, the following relationships form a cycle, please choose an egde to remove this cycle, and save nodes of this edge in a list. "},
-        {"role": "user", "content": message},
-    ],
-    response_format=VarList,
+    response = client.chat_completion(
+        prompt=message,
+        system_prompt="You are a helpful assistant, the following relationships form a cycle, please choose an egde to remove this cycle, and save nodes of this edge in a list.",
+        json_response=True
     )
-
-    node_list = completion.choices[0].message.parsed.nodes
-    return node_list
+    
+    return response['nodes']
 
 def check_cycle(args, data, graph):
     columns = data.columns

@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 import pandas as pd
-from openai import OpenAI
+from llm import LLMClient
 import os
 from pydantic import BaseModel
 from dotenv import load_dotenv
@@ -173,27 +173,13 @@ def generate_density_plot(global_state, data, matched_data, treatment, confounde
     return figs
 
 def LLM_parse_query(args, format, prompt, message):
-    client = OpenAI()
-    if format:
-        completion = client.beta.chat.completions.parse(
-        model="gpt-4o-mini-2024-07-18",
-        messages=[
-            {"role": "system", "content": prompt},
-            {"role": "user", "content": message},
-        ],
-        response_format=format,
-        )
-        parsed_response = completion.choices[0].message.parsed
-    else: 
-        completion = client.beta.chat.completions.parse(
-        model="gpt-4o-mini-2024-07-18",
-        messages=[
-            {"role": "system", "content": prompt},
-            {"role": "user", "content": message},
-        ],
-        )
-        parsed_response = completion.choices[0].message.content
-    return parsed_response
+    client = LLMClient(args)
+    response = client.chat_completion(
+        prompt=message,
+        system_prompt=prompt,
+        json_response=bool(format)
+    )
+    return response
 
 def LLM_select_confounders(treatment, key_node, args, data):
     class ConfounderList(BaseModel):
@@ -207,9 +193,8 @@ Only return me with the variable name, do not include anything else.
 Do not include the treatment and result variables in the confounders list, and do not include too many confounders.
 Please limit the number of confounders within 5!
 """
-    parsed_response = LLM_parse_query(args, ConfounderList, 'You are an expert in Causal Discovery.', prompt)
-    LLM_confounders = parsed_response.confounders
-    return LLM_confounders 
+    response = LLM_parse_query(args, ConfounderList, 'You are an expert in Causal Discovery.', prompt)
+    return response['confounders']
 
 def LLM_select_hte_var(args, treatment, key_node, message, data):
     class HTE_VarList(BaseModel):
@@ -225,9 +210,8 @@ Result: {key_node}
 The heterogeneous variables must be among these variables: {data.columns}
 Only return me with the variable name, do not include anything else.
 """
-    parsed_response = LLM_parse_query(args, HTE_VarList, 'You are an expert in Causal Discovery.', prompt)
-    hte_variables = parsed_response.hte_variable    
-    return hte_variables
+    response = LLM_parse_query(args, HTE_VarList, 'You are an expert in Causal Discovery.', prompt)
+    return response['hte_variable']
 
 def check_binary(column):
     unique_values = column.unique()

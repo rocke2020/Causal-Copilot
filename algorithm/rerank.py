@@ -3,7 +3,7 @@ import torch
 from .wrappers import __all__ as all_algos
 from .hyperparameter_selector import HyperparameterSelector
 from .runtime_estimators.runtime_estimator import RuntimeEstimator
-from .llm_client import LLMClient
+from llm import LLMClient
 from .context.algos.utils.json2txt import create_filtered_benchmarking_results, create_filtered_benchmarking_results_ts
 
 class Reranker:
@@ -114,7 +114,12 @@ class Reranker:
         time_info = self.runtime_estimate(algo_candidates, global_state.statistics.sample_size, global_state.statistics.feature_number)
         
         prompt = self.create_prompt(global_state, algo_info, time_info)
-        output = self.llm_client.chat_completion(system_prompt=prompt, prompt="Please choose the best algorithm considering all relevant factors.", json_response=True, model="gpt-4o", temperature=0.0)
+        output = self.llm_client.chat_completion(
+            prompt=prompt,
+            system_prompt="Please choose the best algorithm considering all relevant factors.",
+            json_response=True,
+            temperature=0.0
+        )
         print("-"*25, "\n", "The received answer for rerank is: ", "\n", output)
         selected_algo = output['algorithm']
         global_state.algorithm.algorithm_optimum = output

@@ -1,27 +1,26 @@
-from openai import OpenAI
+from llm import LLMClient
 class Discussion(object):
     # Kun Zhou Implemented
     def __init__(self, args, report):
         self.args = args
-        self.client = OpenAI()
+        self.client = LLMClient(args)
 
         # Extract the text information from the Latex file
-        response = self.client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": "You are a helpful assistant."},
-                {"role": "user", "content": "Please extract the text information from the Latex file:\n\n%s" % report}
-            ]
+        response = self.client.chat_completion(
+            prompt=report,
+            system_prompt="You are a helpful assistant for extracting text from Latex.",
+            json_response=False
         )
-        self.report_content = response.choices[0].message.content
+        self.report_content = response
 
     def interaction(self, conversation_history, user_query):
         conversation_history.append({"role": "user", "content": user_query})
-        response = self.client.chat.completions.create(
-            model="gpt-4o-mini",
-            messages=conversation_history
+        response = self.client.chat_completion(
+            prompt=user_query,
+            system_prompt="You are a helpful assistant for user interaction.",
+            json_response=False
         )
-        output = response.choices[0].message.content
+        output = response
         print("Copilot: ", output)
         print("-----------------------------------------------------------------------------------------------")
         return conversation_history, output

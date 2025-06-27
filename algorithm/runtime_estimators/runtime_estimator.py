@@ -4,7 +4,7 @@ import pandas as pd
 import json
 import os
 from typing import Dict, List, Any
-from openai import OpenAI
+from llm import LLMClient
 import scipy.special
 import requests
 
@@ -375,27 +375,14 @@ class RuntimeEstimator:
         For now, we simulate a response.
         """
         # Use o3-mini model to analyze code complexity
-        client = OpenAI()
+        client = LLMClient()
         
-        response = client.chat.completions.create(
-            model="o3-mini",
-            messages=[
-                {"role": "user", "content": prompt}
-            ],
-            response_format={"type": "json_object"}
+        response = client.chat_completion(
+            prompt=prompt,
+            system_prompt="You are a helpful assistant for runtime estimation.",
+            json_response=True
         )
-        print(response.choices[0].message.content)
-        try:
-            complexity_json = json.loads(response.choices[0].message.content)
-            return complexity_json
-        except json.JSONDecodeError:
-            # Fallback to default response if parsing fails
-            return {
-                "terms": [{"name": "default_term", "expression": "N * p"}],
-                "min_runtime": 60,
-                "log_transform": False,
-                "param_calculations": {}
-            }
+        return response
 
 if __name__ == "__main__":
     # Test all algorithms
