@@ -40,8 +40,23 @@ def generate_hyperparameter_text(global_state):
         hyperparameter_text += f"  Explanation: {explanation}\n\n"
     return hyperparameter_text, global_state
 
-def LLM_parse_query(format, prompt, message):
-    client = LLMClient()
+def LLM_parse_query(format, prompt, message, config=None):
+    # Create a simple args-like object from config
+    class Args:
+        def __init__(self, config):
+            if config:
+                self.llm_provider = config.llm_provider
+                self.model_name = config.model_name
+                self.api_key = config.apikey if config.llm_provider == 'openai' else None
+            else:
+                # Fallback to environment variables or defaults
+                self.llm_provider = os.environ.get('LLM_PROVIDER', 'openai')
+                self.model_name = os.environ.get('LLM_MODEL', 'gpt-4o-mini')
+                self.api_key = None
+    
+    args = Args(config)
+    client = LLMClient(args)
+    
     if format:
         completion = client.beta.chat.completions.parse(
         model="gpt-4o-mini-2024-07-18",

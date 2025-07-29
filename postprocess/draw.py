@@ -8,12 +8,26 @@ def _draw_pag_edges(
     undirected_edges: List[Tuple] = None,
     bidirected_edges: List[Tuple] = None,
     associated_edges: List[Tuple] = None,
+    data_type: str = "tabular",
     **attrs,
 ):
     """Draw the PAG edges.
 
     PAG edges may have different endpoints.
+    
+    Parameters
+    ----------
+    data_type : str, optional (default: "tabular")
+        Type of data: "time-series" or "tabular". Used to determine edge colors.
     """
+    # Define colors based on data type
+    if data_type == "time-series":
+        bidirected_color = "orange"  # Orange for time-series bi-directed edges
+        directed_color = "#000080"   # Dark blue for directed edges (same as before)
+    else:
+        bidirected_color = "red"     # Red for tabular bi-directed edges
+        directed_color = "#000080"   # Dark blue for directed edges (same as before)
+    
     # keep track of edges with circular edges between each other because we want to
     # draw edges correctly when there are circular edges
     found_circle_sibs = set()
@@ -55,7 +69,7 @@ def _draw_pag_edges(
     if bidirected_edges is not None:
         for sib1, sib2 in bidirected_edges:
             sib1, sib2 = str(sib1), str(sib2)
-            dot.edge(sib1, sib2, dir="both", color="red", **attrs)
+            dot.edge(sib1, sib2, dir="both", color=bidirected_color, **attrs)
             
     if associated_edges is not None:
         for assoc1, assoc2 in associated_edges:
@@ -71,6 +85,7 @@ def draw(
     pos: Optional[dict] = None,
     name: Optional[str] = None,
     shape="square",
+    data_type: str = "tabular",
     **attrs,
 ):
     """Visualize the graph.
@@ -91,6 +106,8 @@ def draw(
         Label for the generated graph.
     shape : str
         The shape of each node. By default 'square'. Can be 'circle', 'plaintext'.
+    data_type : str, optional (default: "tabular")
+        Type of data: "time-series" or "tabular". Used to determine edge colors.
     attrs : dict
         Any additional edge attributes (must be strings). For more
         information, see documentation for GraphViz.
@@ -155,6 +172,7 @@ def draw(
         undirected_edges=undirected_edges,
         bidirected_edges=bidirected_edges,
         associated_edges=associated_edges,
+        data_type=data_type,
     )
     size = int(np.sqrt(len(G.nodes())))+1
     dot.graph_attr['K'] = '0.8'
@@ -170,6 +188,11 @@ def draw(
     node_width = "1"   # Increased from 0.5 to 0.8
     node_fontsize_base = "20"  # Base font size (was dynamically calculated)
     edge_penwidth = "1.5"  # Increased line thickness for edges
+    # Define directed edge color based on data_type
+    if data_type == "time-series":
+        directed_color = "#000080"  # Keep as dark blue for now (can be changed if needed)
+    else:
+        directed_color = "#000080"
     # add the nodes that in the G but not in the PAG
     for node in full_node_names:
         if node not in dot.body:
@@ -211,7 +234,7 @@ def draw(
                 if parent == v:
                     dot.edge(parent, child, style="invis", penwidth=edge_penwidth, **attrs)
                 else:
-                    dot.edge(parent, child, color="#000080", penwidth=edge_penwidth, **attrs)
+                    dot.edge(parent, child, color=directed_color, penwidth=edge_penwidth, **attrs)
         except nx.exception.NetworkXError as e:
             # the node is completely independent in the inferred graph
             pass

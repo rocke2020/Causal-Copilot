@@ -2,6 +2,10 @@ import os
 import subprocess
 from pathlib import Path
 
+# LLM Configuration - Easy to change for different models
+os.environ.setdefault('LLM_PROVIDER', 'ollama')  # 'openai' or 'ollama'
+os.environ.setdefault('LLM_MODEL', 'llama3.2')   # 'llama2', 'llama3.2', 'mistral', etc.
+
 def init_graphviz():
     # Try apt-get (Debian/Ubuntu) first
     print("Attempting to install Graphviz using apt-get...")
@@ -93,7 +97,7 @@ from report.report_generation import Report_generation
 from user.discuss import Discussion
 from llm import LLMClient
 from pydantic import BaseModel
-from help_functions import *
+from .help_functions import *
 from causal_analysis.help_functions import *
 
 print('##########Initialize Global Variables##########')
@@ -513,7 +517,7 @@ def process_message(message, args, global_state, REQUIRED_INFO, CURRENT_STAGE, c
                 message: {message} 
                 file: {file_content}
                 """
-                parsed_response = LLM_parse_query(args, None, prompt, message)
+                parsed_response = LLM_parse_query(None, prompt, message, config)
                 try:
                     changes = json.loads(parsed_response)
                     for key, value in changes.items():
@@ -712,9 +716,10 @@ def process_message(message, args, global_state, REQUIRED_INFO, CURRENT_STAGE, c
             yield args, global_state, REQUIRED_INFO, CURRENT_STAGE, chat_history, download_btn
             
             class Indicator(BaseModel):
-                        indicator: bool
+                indicator: bool
+            
             prompt = """You are a helpful assistant, please identify whether user want to further continue the task and save the boolean result in indicator. """
-            parsed_response = LLM_parse_query(args, Indicator, prompt, message)
+            parsed_response = LLM_parse_query(Indicator, prompt, message, config)
             indicator = parsed_response.indicator
             if indicator:
                 CURRENT_STAGE = 'revise_graph'

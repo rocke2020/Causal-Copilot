@@ -127,11 +127,14 @@ class Visualization(object):
             pag.add_edge(edge[0], edge[1], pag.associated_edge_name)
             pag.add_edge(edge[1], edge[0], pag.associated_edge_name)
 
+        # Determine data type for color coding
+        data_type = "time-series" if self.global_state.statistics.time_series else "tabular"
+
         if pos is not None:
-            dot_graph = draw(pag, full_node_names=list(pos.keys()), pos=pos, shape='circle')  
+            dot_graph = draw(pag, full_node_names=list(pos.keys()), pos=pos, shape='circle', data_type=data_type)  
             pos_G = pos              
         else:
-            dot_graph = draw(pag, shape='circle')
+            dot_graph = draw(pag, shape='circle', data_type=data_type)
             pos_G = None
         dot_graph.render(outfile=path, cleanup=True)
         

@@ -11,7 +11,11 @@ class DemoConfig:
     output_report_dir: str = 'output_report'
     output_graph_dir: str = 'output_graph'
 
-    # OpenAI Settings
+    # LLM Settings - Read from environment variables
+    llm_provider: str = os.environ.get('LLM_PROVIDER', 'ollama')  # 'openai' or 'ollama'
+    model_name: str = os.environ.get('LLM_MODEL', 'llama3.2')     # 'llama2', 'llama3.2', 'mistral', etc.
+    
+    # OpenAI Settings (only used if llm_provider == "openai")
     organization: str = "org-gw7mBMydjDsOnDlTvNQWXqPL"
     project: str = "proj_SIDtemBJMHUWG7CPdU7yRjsn" 
     apikey: str = "sk-***************************"

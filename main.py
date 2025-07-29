@@ -19,18 +19,6 @@ load_dotenv()
 
 import os
 
-# Test configurations
-OPENAI_CONFIG = {
-    'llm_provider': 'openai',
-    'model_name': 'gpt-4o-mini',
-    'api_key': os.getenv('OPENAI_API_KEY')
-}
-
-OLLAMA_CONFIG = {
-    'llm_provider': 'ollama',
-    'model_name': 'llama2',
-    'base_url': 'http://localhost:11434'
-}
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Causal Learning Tool for Data Analysis')
