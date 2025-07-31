@@ -185,7 +185,7 @@ CDNOD: {
     Graph Density: Sparse,
     Distribution Shift: Heterogeneous,
     Domain Knowledge Injection: Yes,
-    Critical Notes: "Requires EXPLICIT 'domain_index' column in the data indicating different environments/domains to analyze, NEVER use it when there is no 'domain_index' column or it is None even when the data is heterogeneous"
+    Critical Notes: "Requires EXPLICIT 'domain_index' column in the data indicating different environments/domains to analyze, NEVER use it when there is no 'domain_index' column or it is None even when the data is heterogeneous. Note that domain knowledge/expertise/prior is not enough for this algorithm, a numerical column of exactly 'domain_index' is required to run this algorithm."
     }
 
 FGES: {

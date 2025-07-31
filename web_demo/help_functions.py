@@ -3,6 +3,7 @@ import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import traceback
+import json
 from preprocess.stat_info_functions import *
 from llm import LLMClient
 from pydantic import BaseModel
@@ -40,42 +41,27 @@ def generate_hyperparameter_text(global_state):
         hyperparameter_text += f"  Explanation: {explanation}\n\n"
     return hyperparameter_text, global_state
 
-def LLM_parse_query(format, prompt, message, config=None):
-    # Create a simple args-like object from config
-    class Args:
-        def __init__(self, config):
-            if config:
-                self.llm_provider = config.llm_provider
-                self.model_name = config.model_name
-                self.api_key = config.apikey if config.llm_provider == 'openai' else None
-            else:
-                # Fallback to environment variables or defaults
-                self.llm_provider = os.environ.get('LLM_PROVIDER', 'openai')
-                self.model_name = os.environ.get('LLM_MODEL', 'gpt-4o-mini')
-                self.api_key = None
-    
-    args = Args(config)
-    client = LLMClient(args)
+def LLM_parse_query(format, prompt, message):
+    # Create a LLMClient instance
+    client = LLMClient()
     
     if format:
-        completion = client.beta.chat.completions.parse(
-        model="gpt-4o-mini-2024-07-18",
-        messages=[
-            {"role": "system", "content": prompt},
-            {"role": "user", "content": message},
-        ],
-        response_format=format,
+        # Use structured output format
+        parsed_response = client.chat_completion(
+            messages=[
+                {"role": "system", "content": prompt},
+                {"role": "user", "content": message},
+            ],
+            response_format=format,
         )
-        parsed_response = completion.choices[0].message.parsed
     else: 
-        completion = client.beta.chat.completions.parse(
-        model="gpt-4o-mini-2024-07-18",
-        messages=[
-            {"role": "system", "content": prompt},
-            {"role": "user", "content": message},
-        ],
+        # Use regular string response
+        parsed_response = client.chat_completion(
+            messages=[
+                {"role": "system", "content": prompt},
+                {"role": "user", "content": message},
+            ],
         )
-        parsed_response = completion.choices[0].message.content
     return parsed_response
 
 def parse_drop_high_miss_query(message, chat_history, download_btn, global_state, REQUIRED_INFO, CURRENT_STAGE):

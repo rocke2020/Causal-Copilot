@@ -141,7 +141,7 @@ causal_inference/test_result
 simulated_data
 simulated_data/
 gradio_output/
-gradio/test_for_demo
+web_demo/test_for_demo
 demo_data/
 output/
 .vscode

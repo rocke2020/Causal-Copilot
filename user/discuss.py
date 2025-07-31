@@ -24,14 +24,17 @@ class Discussion(object):
                 json_response=False
             )
             output = response
-            logger.status("Copilot", output)
+            # Format the response for better readability
+            logger.info("🤖 Copilot Response:")
+            logger.status("", output)  # Empty message to just show the content
             logger.debug("=" * 95, "Discussion")
             return conversation_history, output
             
         except Exception as e:
             logger.error(f"Error generating response: {str(e)}", "Discussion")
             error_output = "I apologize, but I encountered an error while processing your question. Please try rephrasing your question or contact support if the issue persists."
-            logger.status("Copilot", error_output)
+            logger.info("🤖 Copilot Response (Error):")
+            logger.status("", error_output)  # Empty message to just show the content
             return conversation_history, error_output
 
     def forward(self, global_state):

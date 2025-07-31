@@ -163,7 +163,7 @@ improved_figures/
 simulated_data/
 demo_data/
 gradio_output/
-gradio/test_for_demo
+web_demo/test_for_demo
 causal_inference/test_data
 postprocess/test_data/
 
@@ -179,7 +179,6 @@ test_output/
 ts_eda_test_output/
 causal_discovery/context/benchmarking/merged_results.json
 
-
 # analysis notebooks
 plot.ipynb
 complex_plot.ipynb
@@ -187,8 +186,8 @@ benchmark.ipynb
 
 # gradio demo
 .gradio
-gradio/public/
-gradio/demo_official.py
+web_demo/public/
+web_demo/demo_official.py
 
 # deployment
 copilot.pem

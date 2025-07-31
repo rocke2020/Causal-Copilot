@@ -39,19 +39,17 @@ class HTE_Param_Selector(object):
         return prompt, discrete
     
     def model_suggestion(self, client, prompt):
-        response = client.chat.completions.create(
-            model="gpt-4o-mini",
+        response = client.chat_completion(
             messages=[
                 {"role": "system", "content": "You are a causal discovery expert. Provide your response in JSON format."},
                 {"role": "user", "content": prompt}
             ],
-            response_format={"type": "json_object"}
+            json_response=True
         )
 
         from utils.logger import logger
         logger.debug("Model response received", "HTE")
-        model_suggest_json = json.loads(response.choices[0].message.content)
-        return model_suggest_json
+        return response
     
     def get_model(self, model_name, **kwargs):
         if hasattr(sklearn.linear_model, model_name):

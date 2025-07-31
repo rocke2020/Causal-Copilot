@@ -133,6 +133,8 @@ xgboost==3.0.0
 dcor==0.6.0
 CEM-LinearInf==0.0.1
 slicer==0.0.8
+python_multipart==0.0.20
+groovy==0.1.2
 
 
 

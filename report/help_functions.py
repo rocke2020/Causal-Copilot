@@ -167,25 +167,21 @@ def remove_redundant_title(text):
 
 def LLM_parse_query(client, format, prompt, message):
     if format:
-        completion = client.beta.chat.completions.parse(
-        model="gpt-4o-mini-2024-07-18",
+        response = client.chat_completion(
         messages=[
             {"role": "system", "content": prompt},
             {"role": "user", "content": message},
         ],
         response_format=format,
         )
-        parsed_response = completion.choices[0].message.parsed
     else: 
-        completion = client.beta.chat.completions.parse(
-        model="gpt-4o-mini-2024-07-18",
+        response = client.chat_completion(
         messages=[
             {"role": "system", "content": prompt},
             {"role": "user", "content": message},
         ],
         )
-        parsed_response = completion.choices[0].message.content
-    return parsed_response
+    return response
 
 def granger_causality_to_latex(potential_granger_list):
     """

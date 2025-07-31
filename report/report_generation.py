@@ -99,7 +99,7 @@ class Report_generation(object):
             self.data_mode = 'real'
         else:
             self.data_mode = 'simulated'
-        self.data_file = global_state.user_data.output_graph_dir.split('/')[-2]
+        self.data_file = global_state.user_data.output_graph_dir
         self.global_state = global_state
         self.inference_global_state = inference_global_state
         self.args = args 
@@ -130,7 +130,7 @@ class Report_generation(object):
 
     def get_title(self):
         response_title = self.client.chat_completion(
-            prompt=f"You are a helpful assistant, please give me the name of the given dataset {self.data_file}\nFor example, if the dataset is Sachs.csv, then return me with 'Sachs'. If the dataset is a directory called Abalone, then return me with 'Abalone'.\nOnly give me the string of name, do not include anything else.",
+            prompt=f"You are a helpful assistant, please give me the name of the given dataset (store path: {self.data_file})\nFor example, if the dataset is Sachs.csv, then return me with 'Sachs'. If the dataset is a directory called Abalone, then return me with 'Abalone'.\nOnly give me the string of name, do not include anything else.",
             system_prompt=None,
             json_response=False
         )
@@ -1056,7 +1056,7 @@ Help me to write a comparison of the following causal discovery results of diffe
                     {"role": "user", "content": tex_content}
                 ]
                 )
-                output = response.choices[0].message.content
+                output = response
                 with open(f'{save_path}/report_revised.tex', 'w', encoding='utf-8') as file:
                     file.write(output)
             else:

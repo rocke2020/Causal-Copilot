@@ -55,10 +55,8 @@ def simulate_user_query(args):
     )
     
     # Extract the response content (this is expected to be a JSON string representing an array of simulations)
-    info_extracted = response.choices[0].message.content.strip()
     try:
-        info_extracted = re.search(r'<json>(.*?)</json>', info_extracted, re.DOTALL).group(1)
-        simulation_info = json.loads(info_extracted)
+        simulation_info = response
         if not isinstance(simulation_info, list):
             simulation_info = [simulation_info]
     except Exception as e:

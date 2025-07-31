@@ -31,14 +31,6 @@ class HTE_Filter(object):
 
         return prompt_template
 
-    def parse_response(self, response):
-        try:
-            algo_candidates = json.loads(response)
-        except json.JSONDecodeError:
-            print("Error: Unable to parse JSON response")
-            return {}
-        return algo_candidates
-
     def forward(self, global_state, query):
         prompt = self.create_prompt(global_state.user_data.processed_data, global_state.statistics.description, query)
 
@@ -48,8 +40,7 @@ class HTE_Filter(object):
             json_response=True
         )
 
-        output = response.choices[0].message.content
-        hte_algo = self.parse_response(output)
+        hte_algo = response
         print('hte algo response:', hte_algo)
 
         global_state.inference.hte_algo_json = hte_algo

@@ -11,8 +11,8 @@ class OllamaClient:
         Args:
             model_name (str): Name of the model to use (default: "llama2")
         """
-        self.model_name = os.getenv('MODEL', 'qwen3:8b')
-        self.base_url = os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')
+        self.model_name = os.getenv('LLM_MODEL')
+        self.base_url = os.getenv('OLLAMA_BASE_URL')
         
     def chat_completion(self, 
                        prompt: str, 

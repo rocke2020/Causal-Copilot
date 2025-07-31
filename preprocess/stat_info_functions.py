@@ -27,7 +27,6 @@ from scipy.signal import find_peaks
 import json
 from llm import LLMClient
 from utils.logger import logger
-# from gradio.demo import global_state
 
 # new package
 from sympy.codegen.ast import Return
@@ -128,7 +127,6 @@ def drop_greater_miss_50_feature(global_state):
     return global_state
 
 
-
 def llm_select_dropped_features(global_state):
     ratio_between_05_03 = [k for k, v in global_state.statistics.miss_ratio.items() if 0.5 > v >= 0.3]
 
@@ -139,13 +137,11 @@ def llm_select_dropped_features(global_state):
               'You only need to give me the list of features, no other justifications are needed. If there are no features you think should be potential confounder,'
               'just give me an empty list.')
 
-    response = client.chat_completion(
+    llm_select_feature = client.chat_completion(
         prompt=prompt,
         system_prompt="You are a helpful assistant for statistical info functions.",
         json_response=True
     )
-    llm_select_feature = response.choices[0].message.content
-    llm_select_feature = llm_select_feature.replace('```json', '').replace('```', '').strip()
 
     llm_drop_feature = [element for element in ratio_between_05_03 if element not in llm_select_feature]
     llm_drop_keep_important = [element for element in llm_drop_feature if

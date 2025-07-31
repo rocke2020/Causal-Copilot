@@ -15,6 +15,8 @@ from postprocess.visualization import Visualization, convert_to_edges
 from preprocess.eda_generation import EDA
 from report.report_generation import Report_generation
 from global_setting.Initialize_state import global_state_initialization, load_data
+
+import os
 import json
 import argparse
 import numpy as np
@@ -22,8 +24,6 @@ import pandas as pd
 from dotenv import load_dotenv
 
 load_dotenv()
-
-import os
 
 
 def parse_args():
@@ -330,7 +330,6 @@ def main(args):
     '''
     logger.step(8, 8, "Report Generation")
     #############Report Generation###################
-    import os 
     try_num = 1
     
     logger.detail("Step 1/3: Analyzing causal relationships")

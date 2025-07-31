@@ -106,7 +106,8 @@ class Reranker:
             json_response=True,
             temperature=0.0
         )
-        logger.detail(f"The received answer for rerank is: {output}")
+        scores_str = ', '.join([f"{algo}: {scores.get('final_score', 'N/A')}" for algo, scores in output.get('score_calculation', {}).items()])
+        logger.detail(f"Algorithm selection completed - Selected: {output.get('algorithm', 'Unknown')} | Scores: {scores_str} | Reason: {output.get('reason', 'No reasoning provided')[:100]}...")
         selected_algo = output['algorithm']
         global_state.algorithm.algorithm_optimum = output
 

@@ -353,8 +353,17 @@ class CausalLogger:
         if value is not None:
             if isinstance(value, (int, float)) and abs(value) < 1000:
                 formatted_value = f"{Colors.BRIGHT_WHITE}{value}{Colors.RESET}"
-            elif isinstance(value, str) and len(value) < 50:
-                formatted_value = f"{Colors.BRIGHT_WHITE}{value}{Colors.RESET}"
+            elif isinstance(value, str):
+                # For Copilot responses, show full content with proper formatting
+                if message == "Copilot" or "copilot" in message.lower():
+                    # Show full content with line breaks preserved
+                    formatted_value = f"{Colors.BRIGHT_WHITE}{value}{Colors.RESET}"
+                elif len(value) < 50:
+                    formatted_value = f"{Colors.BRIGHT_WHITE}{value}{Colors.RESET}"
+                else:
+                    # For other long strings, show first 100 chars with ellipsis
+                    truncated = value[:100] + "..." if len(value) > 100 else value
+                    formatted_value = f"{Colors.BRIGHT_WHITE}{truncated}{Colors.RESET}"
             else:
                 # For complex values, show type info only
                 formatted_value = f"{Colors.DIM}{type(value).__name__}({len(str(value))} chars){Colors.RESET}"
