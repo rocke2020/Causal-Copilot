@@ -8,6 +8,7 @@ from plumbum.cmd import latexmk
 from plumbum import local
 from report.help_functions import *
 import json 
+from utils.logger import logger
 #from report.report_generation import compile_tex_to_pdf_with_refs
 
 class Inference_Report_generation(object):
@@ -64,7 +65,7 @@ class Inference_Report_generation(object):
         response = self.task_info['result']['Treatment Effect Estimation']['response']
         figs = self.task_info['result']['Treatment Effect Estimation']['figs']
         for idx, r in enumerate(response):
-            print(r)
+            logger.debug(f"Treatment effect result: {r}", "InferenceReport")
             r = bold_conversion(r)
             r = list_conversion(r)
             r = fix_latex_itemize(r)
@@ -206,7 +207,7 @@ class Inference_Report_generation(object):
         """
         method = LLM_parse_query(self.client, None, 'You are an expert in Causal Discovery.', prompt)
         response = self.task_info['result']['Counterfactual Estimation']['response']
-        print('original response', response)
+        logger.debug(f"Original response: {response[:100]}...", "Counterfactual")
         figs = self.task_info['result']['Counterfactual Estimation']['figs']
         response = bold_conversion(response)
         response = list_conversion(response)
@@ -214,7 +215,7 @@ class Inference_Report_generation(object):
         response = fix_latex_itemize_LLM(self.client, response)
         #response = remove_redundant_point(response)
         response = remove_redundant_title(response)
-        print('2nd response', response)
+        logger.debug(f"Processed response: {response[:100]}...", "Counterfactual")
 
         cf_template = load_context("report/context/inference/counterfact.tex")
         replacement = {'[METHOD]': method.replace('_', ' '), 
@@ -222,7 +223,7 @@ class Inference_Report_generation(object):
                        '[GRAPH1]': figs[0]}
         for placeholder, value in replacement.items():
             cf_template = cf_template.replace(placeholder, value)
-        print('3rd response', replacement)
+        logger.debug(f"Template replacements: {len(replacement)} items", "Counterfactual")
         
         return cf_template
 

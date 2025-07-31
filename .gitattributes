@@ -137,11 +137,11 @@ data/simulation/simulated_data
 data/simulation/evaluation.py
 preprocess/result
 postprocess/test_result
-causal_analysis/test_result
+causal_inference/test_result
 simulated_data
 simulated_data/
 gradio_output/
-Gradio/test_for_demo
+gradio/test_for_demo
 demo_data/
 output/
 .vscode
@@ -151,9 +151,9 @@ test_result/
 postprocess/test_data/
 test_for_demo/
 report/test
-causal_analysis/test_data
-algorithm/context/algos/utils/
-algorithm/context/algos/profiles/
+causal_inference/test_data
+causal_discovery/context/algos/utils/
+causal_discovery/context/algos/profiles/
 test_output/
 externals/trustworthyAI/
 externals/acceleration

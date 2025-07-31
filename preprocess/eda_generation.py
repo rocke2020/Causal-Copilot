@@ -11,6 +11,7 @@ from scipy.stats import pearsonr
 from scipy.signal import find_peaks
 import math
 from types import SimpleNamespace
+from utils.logger import logger
 
 class EDA(object):
     def __init__(self, global_state):
@@ -138,10 +139,10 @@ class EDA(object):
         
         # Number of features and set the number of plots per row
         num_features = len(df.columns)
-        print(num_features)
+        logger.debug(f"Number of features for distribution plots: {num_features}", "EDA")
         plots_per_row = 5
         num_rows = (num_features + plots_per_row - 1) // plots_per_row  # Calculate number of rows needed
-        print(num_rows)
+        logger.debug(f"Distribution plot layout: {num_rows} rows, {plots_per_row} columns", "EDA")
         # Create a grid of subplots
         #plt.rcParams['font.family'] = 'Times New Roman'
         fig, axes = plt.subplots(nrows=num_rows, ncols=plots_per_row, figsize=(plots_per_row * 5, num_rows * 4))
@@ -488,7 +489,7 @@ class EDA(object):
                                 corr, _ = pearsonr(s1, s2)
                                 lag_corr_matrix[i, col_idx] = corr
                             except Exception as e:
-                                print(f"Error in correlation calculation for {var1} and {var2} at lag {lag}: {e}")
+                                logger.warning(f"Error in correlation calculation for {var1} and {var2} at lag {lag}: {e}")
                                 lag_corr_matrix[i, col_idx] = np.nan
 
         summary = self.generate_lag_correlation_summary(lag_corr_matrix, variables, max_lag)
@@ -622,7 +623,7 @@ class EDA(object):
             }
             for item in potential_granger
         ]
-        print(summary['potential_granger_causality'])
+        logger.debug(f"Potential Granger causality: {summary['potential_granger_causality']}", "EDA")
         return summary
     
     
@@ -1050,7 +1051,7 @@ class EDA(object):
             return save_path, var_summary
             
         except Exception as e:
-            print(f"Error in VAR analysis: {str(e)}")
+            logger.error(f"Error in VAR analysis: {str(e)}")
             return None, None
         
     def generate_eda(self):
@@ -1169,7 +1170,7 @@ def test_timeseries_eda():
     import os
     from types import SimpleNamespace
     
-    print("Running Time Series EDA Test")
+    logger.section("Running Time Series EDA Test")
     
     # Create a temporary directory for output
     output_dir = "ts_eda_test_output"
@@ -1239,36 +1240,36 @@ def test_timeseries_eda():
     eda = EDA(global_state)
     
     # Test individual functions
-    print("\nTesting multivariate_time_series_plot:")
+    logger.process("Testing multivariate_time_series_plot")
     mv_path = eda.multivariate_time_series_plot()
-    print(f"Plot saved to: {mv_path}")
+    logger.save("Multivariate plot saved", mv_path)
     
-    print("\nTesting lag_correlation_heatmap:")
+    logger.process("Testing lag_correlation_heatmap")
     lag_path, summary = eda.lag_correlation_heatmap(max_lag=5)
-    print(f"Plot saved to: {lag_path}")
+    logger.save("Lag correlation heatmap saved", lag_path)
     
-    print("\nTesting time_series_diagnostics:")
+    logger.process("Testing time_series_diagnostics")
     diag_path, summary = eda.time_series_diagnostics(max_vars=3, max_lags=15)
-    print(f"Plot saved to: {diag_path}")
+    logger.save("Time series diagnostics saved", diag_path)
     
-    print("\nTesting analyze_var_model:")
+    logger.process("Testing analyze_var_model")
     var_path, var_summary = eda.analyze_var_model(max_lag=3)
-    print(f"Plot saved to: {var_path}")
-    print(f"VAR summary: {var_summary}")
+    logger.save("VAR model plot saved", var_path)
+    logger.debug(f"VAR summary: {var_summary}", "EDA")
     
-    print("\nTesting complete generate_eda method:")
+    logger.process("Testing complete generate_eda method")
     eda.generate_eda()
-    print("All time series EDA results saved to global state")
+    logger.success("All time series EDA results saved to global state")
     
-    # Print locations of all generated plots
+    # Log locations of all generated plots
     eda_result = global_state.results.eda
-    print("\nGenerated plots:")
+    logger.section("Generated plots")
     for key, value in eda_result.items():
         if key.startswith('plot_path'):
-            print(f"- {key}: {value}")
+            logger.detail(f"{key}: {value}")
     
-    print(f"\nAll test outputs saved to: {output_dir}")
-    print("Time Series EDA Test Completed")
+    logger.success(f"All test outputs saved to: {output_dir}")
+    logger.checkpoint("Time Series EDA Test Completed")
     
     return global_state.results.eda
 

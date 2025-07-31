@@ -26,7 +26,8 @@ from scipy.stats import mode
 from scipy.signal import find_peaks
 import json
 from llm import LLMClient
-# from Gradio.demo import global_state
+from utils.logger import logger
+# from gradio.demo import global_state
 
 # new package
 from sympy.codegen.ast import Return
@@ -150,9 +151,6 @@ def llm_select_dropped_features(global_state):
     llm_drop_keep_important = [element for element in llm_drop_feature if
                                element not in global_state.user_data.important_features]  # keep important features
     global_state.user_data.llm_drop_features = llm_drop_keep_important
-
-    # After extracting info_extracted["domain_index"] from LLM
-    global_state.statistics.domain_index = info_extracted["domain_index"]
 
     # Robust check: only keep if it's a real column, else set to None
     if (
@@ -339,20 +337,36 @@ def series_lag_est(time_series, nlags=20, acf_threshold=0.6, pacf_top_pct=0.4):
     return final_lag
 
 
-def time_series_lag_est(df: pd.DataFrame, nlags = 30):
+def time_series_lag_est(df: pd.DataFrame, nlags = 10, max_vars = 50):
     '''
     :param df: imputed data in Pandas DataFrame format.
-    :param nlags: maximum lags to check
+    :param nlags: maximum lags to check (reduced from 30 to 10 for performance)
+    :param max_vars: maximum number of variables to test for lag estimation
     :return: estimation of max lag of causal relations of each feature
     '''
-    est_lags = []
-
-    for i in range(df.shape[1]):
-        est_lags.append(series_lag_est(df.iloc[:, i], nlags=nlags))
+    import joblib
+    from joblib import Parallel, delayed
+    import random
+    
+    m = df.shape[1]
+    
+    # Limit the number of variables to test (similar to linearity_check logic)
+    if m > max_vars:
+        test_indices = random.sample(range(m), max_vars)
+        logger.detail(f"Limiting time series lag estimation to {max_vars} out of {m} variables")
+    else:
+        test_indices = range(m)
+    
+    # Parallel processing for lag estimation
+    logger.detail(f"Computing lag estimation for {len(test_indices)} variables in parallel...")
+    est_lags = Parallel(n_jobs=-1)(
+        delayed(series_lag_est)(df.iloc[:, i], nlags=nlags) 
+        for i in test_indices
+    )
     
     mode_lag, count = mode(est_lags)
     median_lag = int(np.median(est_lags))
-    print(mode_lag, median_lag)
+    logger.detail(f"Lag estimation completed - mode: {mode_lag}, median: {median_lag}")
     # final_lag = round((mode_lag * 0.6) + (median_lag * 0.4))
         
     return median_lag
@@ -552,7 +566,7 @@ def linearity_check (df_raw: pd.DataFrame, global_state):
 
     if not os.path.exists(path):
         os.makedirs(path)
-    print(f"Saving residuals plot to {os.path.join(path, 'residuals_plot.jpg')}")
+    logger.save("Saving residuals plot", os.path.join(path, 'residuals_plot.jpg'))
     fig.savefig(os.path.join(path, 'residuals_plot.jpg'))
 
     return global_state
@@ -574,23 +588,37 @@ def linearity_check_ts(df_raw: pd.DataFrame, global_state, save_plot=True):
     residuals = results.resid
     fitted = results.fittedvalues
     columns = residuals.columns
-    reset_pvals = {}
-    for i in range(residuals.shape[1]):
+    from joblib import Parallel, delayed
+    
+    def reset_test_single(i):
         y = residuals.iloc[:, i]
         x = fitted.iloc[:, i]
         x_const = sm.add_constant(x)
         ols_model = sm.OLS(y, x_const).fit()
         reset_result = linear_reset(ols_model, power=2, use_f=True)
-        reset_pvals[columns[i]] = reset_result.pvalue
-
-    bds_pvals = {}
-    for i in range(residuals.shape[1]):
+        return columns[i], reset_result.pvalue
+    
+    def bds_test_single(i):
         y = residuals.iloc[:, i]
         try:
             bds_result = bds(y, max_dim=2)
-            bds_pvals[columns[i]] = bds_result.pvalue
+            return columns[i], bds_result.pvalue
         except Exception as e:
-            bds_pvals[columns[i]] = None
+            return columns[i], None
+    
+    # Parallel processing for RESET tests
+    logger.detail("Computing RESET tests in parallel...")
+    reset_results = Parallel(n_jobs=-1)(
+        delayed(reset_test_single)(i) for i in range(residuals.shape[1])
+    )
+    reset_pvals = dict(reset_results)
+    
+    # Parallel processing for BDS tests
+    logger.detail("Computing BDS tests in parallel...")
+    bds_results = Parallel(n_jobs=-1)(
+        delayed(bds_test_single)(i) for i in range(residuals.shape[1])
+    )
+    bds_pvals = dict(bds_results)
     
     if save_plot:
         num_vars = df_raw.shape[1]
@@ -622,7 +650,7 @@ def linearity_check_ts(df_raw: pd.DataFrame, global_state, save_plot=True):
         fig.subplots_adjust(top=0.95)
         fig.savefig(plot_path)
 
-        print(f"Saved VAR residuals plot to: {plot_path}")
+        logger.save("Saved VAR residuals plot", plot_path)
         
     reset_significant = any(p < alpha for p in reset_pvals.values() if p is not None)
     bds_significant = any(p < alpha for p in bds_pvals.values() if p is not None)
@@ -749,29 +777,39 @@ def heterogeneity_check(df: pd.DataFrame, heterogeneity_indicator: str = "domain
             return True
     return False
 
-def stationary_check(df: pd.DataFrame, max_test: int = 1000, alpha: float = 0.1):
+def stationary_check(df: pd.DataFrame, max_test: int = 50, alpha: float = 0.1):
     '''
     :param df: imputed data in Pandas DataFrame format.
-    :param max_test: maximum number of test.
+    :param max_test: maximum number of test (reduced from 1000 to 50 for performance).
     :param alpha: significance level.
     :return: indicator of stationary.
     '''
-    ADF_pval = []
+    from joblib import Parallel, delayed
+    import random
+    
     m = df.shape[1]
     if m > max_test:
-        index = random.sample(range(m), max_test)
+        test_indices = random.sample(range(m), max_test)
+        logger.detail(f"Limiting stationarity test to {max_test} out of {m} variables")
     else:
-        index = range(m)
+        test_indices = list(range(m))
 
-    for i in (index):
-        x = df.iloc[:, index[i]].to_numpy()
+    def adf_test_single(col_index):
+        x = df.iloc[:, col_index].to_numpy()
         adf_test = adfuller(x)
-        ADF_pval.append(adf_test[1])
+        return adf_test[1]  # Return p-value
+    
+    # Parallel processing for ADF tests
+    logger.detail(f"Computing stationarity tests for {len(test_indices)} variables in parallel...")
+    ADF_pval = Parallel(n_jobs=-1)(
+        delayed(adf_test_single)(i) for i in test_indices
+    )
 
     corrected_ADF = multipletests(ADF_pval, alpha=alpha, method='bonferroni')[0]
     num_stationary = np.sum(corrected_ADF)
-    stationary = num_stationary >= len(index) * 0.8  # At least 80% of tested features must be stationary
-
+    stationary = num_stationary >= len(test_indices) * 0.8  # At least 80% of tested features must be stationary
+    
+    logger.detail(f"Stationarity test completed: {num_stationary}/{len(test_indices)} variables are stationary")
     return stationary
 
 def safe_drop_columns(df, columns_to_drop):
@@ -788,13 +826,13 @@ def stat_info_collection(global_state):
     :param global_state: GlobalState object to update and use.
     :return: updated GlobalState object.
     '''
-    # print("[DEBUG] Entered stat_info_collection")
+    logger.detail("Starting statistical analysis of dataset...")
     if global_state.statistics.heterogeneous and global_state.statistics.domain_index is not None:
         domain_index = global_state.statistics.domain_index
         if domain_index in global_state.user_data.raw_data.columns:
             col_domain_index = global_state.user_data.raw_data[domain_index]
         else:
-            print(f"[WARNING] domain_index '{domain_index}' not found in data columns. Skipping domain index handling.")
+            logger.warning(f"Domain index '{domain_index}' not found in data columns, skipping domain index handling")
             col_domain_index = None
     else:
         col_domain_index = None
@@ -822,57 +860,63 @@ def stat_info_collection(global_state):
     #     global_state.statistics.missingness = False
 
     # Data pre-processing
+    logger.detail("Analyzing data types and characteristics...")
     each_type, dataset_type = data_preprocess(clean_df = data, ts=global_state.statistics.time_series)
-    # print("[DEBUG] Done with data_preprocess")
+    logger.detail("Data preprocessing completed")
 
     # Update global state
     global_state.statistics.data_type = dataset_type["Data Type"]
     global_state.statistics.data_type_column = each_type
-
-    # print("[DEBUG] Done with updating global state")
-    # print(global_state.statistics.heterogeneous)
-    # print(global_state.statistics.domain_index)
-    # print(global_state.user_data.visual_selected_features)
-    # print(global_state.statistics.time_series)
+    logger.detail(f"Dataset type identified: {dataset_type['Data Type']}")
 
 
     # Imputation
+    logger.detail("Checking for missing values...")
     if global_state.statistics.missingness or global_state.statistics.missingness is None:
+        logger.detail("Performing data imputation...")
         imputed_data = imputation(df=data, column_type=each_type, ts=global_state.statistics.time_series)
+        logger.detail("Data imputation completed")
     else:
         imputed_data = data
+        logger.detail("No missing values detected, skipping imputation")
+    
     if global_state.statistics.missingness is None:
         global_state.statistics.missingness = data.isnull().values.any()
     if global_state.statistics.missingness:
-        print("[WARNING] Detected missing values in the dataset.")
+        logger.warning("Missing values detected and handled in the dataset")
     # drop domain index from visual selected features
     if global_state.statistics.heterogeneous and global_state.statistics.domain_index in global_state.user_data.visual_selected_features:
         global_state.user_data.visual_selected_features = [feature for feature in global_state.user_data.visual_selected_features if feature != global_state.statistics.domain_index]
     if global_state.statistics.time_series:
         global_state.user_data.visual_selected_features = [feature for feature in global_state.user_data.visual_selected_features if feature != global_state.statistics.time_index]
     # Check assumption for continuous data
+    logger.detail("Performing statistical assumption tests...")
     if global_state.statistics.data_type == "Continuous":
         if global_state.statistics.linearity is None:
-            # Update global state
-            # print("[DEBUG] About to run linearity_check")
+            logger.detail("Testing linearity assumptions...")
             global_state = linearity_check(df_raw=imputed_data, global_state=global_state)
+            logger.detail(f"Linearity test completed: {'Linear' if global_state.statistics.linearity else 'Non-linear'}")
             
         if global_state.statistics.gaussian_error is None:
-            # Update global state
-            # print("[DEBUG] Entering gaussian_check")
+            logger.detail("Testing Gaussian error assumptions...")
             global_state = gaussian_check(df_raw=imputed_data, global_state=global_state)
+            logger.detail(f"Gaussian test completed: {'Gaussian' if global_state.statistics.gaussian_error else 'Non-Gaussian'}")
     # Assumption checking for time-series data
     elif global_state.statistics.data_type=="Time-series":
+        logger.detail("Analyzing time-series characteristics...")
         # estimate the time lag
         if global_state.statistics.time_lag is None:
-            global_state.statistics.time_lag = time_series_lag_est(df=imputed_data, nlags=20)
+            global_state.statistics.time_lag = time_series_lag_est(df=imputed_data, nlags=10, max_vars=50)
+            logger.detail(f"Time lag estimated: {global_state.statistics.time_lag}")
         # check linearity
         global_state = linearity_check_ts(df_raw=imputed_data, global_state=global_state)
         # check gaussianity
         global_state = gaussian_check(df_raw=imputed_data, global_state=global_state)
         # check stationarity
-        global_state.statistics.stationary = stationary_check(df=imputed_data, max_test=global_state.statistics.num_test, alpha=global_state.statistics.alpha)        
+        global_state.statistics.stationary = stationary_check(df=imputed_data, max_test=global_state.statistics.num_test, alpha=global_state.statistics.alpha)
+        logger.detail(f"Time-series analysis completed: {'Stationary' if global_state.statistics.stationary else 'Non-stationary'}")        
     else:
+        logger.detail("Setting default assumptions for non-continuous data")
         global_state.statistics.linearity = False
         global_state.statistics.gaussian_error = False
 
@@ -882,10 +926,10 @@ def stat_info_collection(global_state):
         global_state.statistics.data_type_column['domain_index'] = 'Category'
 
     global_state.user_data.processed_data = imputed_data
-
+    
+    logger.detail("Statistical analysis completed successfully")
     # Convert statistics to JSON for compatibility with existing code
     # stat_info_json = json.dumps(vars(global_state.statistics), indent=4)
-    # print("[DEBUG] Exit stat_info_collection")
     return global_state
 
 

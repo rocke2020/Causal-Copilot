@@ -69,7 +69,7 @@ class Logging:
 @dataclass
 class Algorithm:
     handle_correlated_features: Optional[bool] = True
-    correlation_threshold: Optional[float] = 0.95
+    correlation_threshold: Optional[float] = 0.99
     selected_algorithm: Optional[str] = None
     selected_reason: Optional[str] = None
     algorithm_candidates: Optional[Dict] = None

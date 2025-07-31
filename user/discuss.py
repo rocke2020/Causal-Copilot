@@ -1,4 +1,5 @@
 from llm import LLMClient
+from utils.logger import logger
 class Discussion(object):
     # Kun Zhou Implemented
     def __init__(self, args, report):
@@ -15,36 +16,52 @@ class Discussion(object):
 
     def interaction(self, conversation_history, user_query):
         conversation_history.append({"role": "user", "content": user_query})
-        response = self.client.chat_completion(
-            prompt=user_query,
-            system_prompt="You are a helpful assistant for user interaction.",
-            json_response=False
-        )
-        output = response
-        print("Copilot: ", output)
-        print("-----------------------------------------------------------------------------------------------")
-        return conversation_history, output
+        
+        try:
+            response = self.client.chat_completion(
+                prompt=user_query,
+                system_prompt="You are a helpful assistant for user interaction.",
+                json_response=False
+            )
+            output = response
+            logger.status("Copilot", output)
+            logger.debug("=" * 95, "Discussion")
+            return conversation_history, output
+            
+        except Exception as e:
+            logger.error(f"Error generating response: {str(e)}", "Discussion")
+            error_output = "I apologize, but I encountered an error while processing your question. Please try rephrasing your question or contact support if the issue persists."
+            logger.status("Copilot", error_output)
+            return conversation_history, error_output
 
     def forward(self, global_state):
         '''
         :param global_state: The global state containing the processed data, algorithm candidates, statistics description, and knowledge document
         :param report: The string containing the content of the latex file
         '''
+        logger.process("Starting interactive discussion session")
         conversation_history = [{"role": "system", "content": "You are a helpful assistant. Please always refer to the following Causal Analysis information to discuss with the user and answer the user's question\n\n%s"%self.report_content}]
 
         # Answer User Query based on Previous Info
+        logger.info("Interactive Q&A session started. Type 'No' to exit.")
         while True:
-            user_query = input("If you still have any questions, just say it and let me help you! If not, just say No\nUser: ")
+            logger.info("If you still have any questions, just say it and let me help you! If not, just say No")
+            user_query = input("User: ")
+            
             if user_query.lower() == "no":
-                print("Thank you for using Causal-Copilot! See you!")
+                logger.success("Thank you for using Causal-Copilot! See you!")
                 break
+                
             conversation_history, output = self.interaction(conversation_history, user_query)
             conversation_history.append({"role": "system", "content": output})
 
+            # Log the conversation to global state
             global_state.logging.final_discuss.append({
                 "input": user_query,
                 "output": output
             })
+        
+        logger.success("Discussion session completed successfully")
 
 
 
@@ -57,7 +74,7 @@ if __name__ == '__main__':
         parser.add_argument(
             '--data-file',
             type=str,
-            default="dataset/Abalone/Abalone.csv",
+            default="data/dataset/Abalone/Abalone.csv",
             help='Path to the input dataset file (e.g., CSV format or directory location)'
         )
 
@@ -65,7 +82,7 @@ if __name__ == '__main__':
         parser.add_argument(
             '--output-report-dir',
             type=str,
-            default='dataset/Abalone/output_report',
+            default='data/dataset/Abalone/output_report',
             help='Directory to save the output report'
         )
 
@@ -73,7 +90,7 @@ if __name__ == '__main__':
         parser.add_argument(
             '--output-graph-dir',
             type=str,
-            default='dataset/Abalone/output_graph',
+            default='data/dataset/Abalone/output_graph',
             help='Directory to save the output graph'
         )
 
@@ -145,6 +162,24 @@ if __name__ == '__main__':
         return args
     args = parse_args()
 
-    discussion = Discussion(args)
-    report = open("../output/Abalone.csv/20241202_205252/output_report/report.txt").read()
-    discussion.forward(report)
+    logger.process("Running Discussion module in standalone mode")
+    try:
+        report = open("../output/Abalone.csv/20241202_205252/output_report/report.txt").read()
+        logger.success("Report file loaded successfully")
+        
+        discussion = Discussion(args, report)
+        
+        # Create a mock global_state for testing
+        from types import SimpleNamespace
+        mock_global_state = SimpleNamespace()
+        mock_global_state.logging = SimpleNamespace()
+        mock_global_state.logging.final_discuss = []
+        
+        discussion.forward(mock_global_state)
+        
+        logger.info(f"Discussion session completed with {len(mock_global_state.logging.final_discuss)} interactions recorded")
+        
+    except FileNotFoundError as e:
+        logger.error(f"Report file not found: {e}")
+    except Exception as e:
+        logger.error(f"Error during discussion execution: {e}")

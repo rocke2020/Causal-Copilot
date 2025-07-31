@@ -15,6 +15,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from postprocess.draw import draw
 from postprocess.pag import PAG_custom
+from utils.logger import logger
 
 
 
@@ -32,7 +33,7 @@ def get_layout(g):
     """
     try:
         # First stage: ForceAtlas2 layout for initial global structure
-        import fa2
+        import fa2_modified as fa2
         forceatlas2 = fa2.ForceAtlas2(
             # Behavior alternatives
             outboundAttractionDistribution=True,  # Dissuade hubs
@@ -62,7 +63,7 @@ def get_layout(g):
     except ImportError:
         # Fallback if fa2 is not available
         pos = nx.spring_layout(g, seed=42)
-        print("Warning: fa2 package not found. Using spring_layout instead.")
+        logger.warning("fa2 package not found, using spring_layout")
     return pos
 
 class Visualization(object):
@@ -95,14 +96,14 @@ class Visualization(object):
         return pos
 
     def plot_pdag(self, mat, save_path, pos=None, relation=False):
-        print(mat)
+        logger.debug(f"Adjacency matrix shape: {mat.shape}", "Visualization")
         algo = self.global_state.algorithm.selected_algorithm
         path = os.path.join(self.save_dir, save_path)
         data_idx = [self.global_state.user_data.processed_data.columns.get_loc(var) for var in self.global_state.user_data.visual_selected_features]
         data_labels = [self.global_state.user_data.processed_data.columns[i].replace('_', ' ') for i in data_idx]
         mat = mat[data_idx, :][:, data_idx]
         edges_dict = convert_to_edges(algo, data_labels, mat)
-        print(edges_dict)
+        logger.debug(f"Edges dictionary: {len(edges_dict)} entries", "Visualization")
         pag = PAG_custom()
         for edge in edges_dict['certain_edges']:
             try:
@@ -190,6 +191,11 @@ class Visualization(object):
        
     def boot_heatmap_plot(self):
         
+        # Ensure save directory exists
+        if not os.path.exists(self.save_dir):
+            os.makedirs(self.save_dir, exist_ok=True)
+            logger.debug(f"Created save directory: {self.save_dir}", "Visualization")
+        
         boot_prob_dict = {k: v for k, v in self.bootstrap_prob.items() if v is not None and sum(v.flatten())>0}
         name_map = {'certain_edges': 'Directed Edge', #(->)
                     'uncertain_edges': 'Undirected Edge', #(-)
@@ -200,20 +206,27 @@ class Visualization(object):
                     'none_existence':'No Edge'}
         paths = []
         for key in boot_prob_dict.keys():
-            prob_mat = boot_prob_dict[key]
-            name = name_map[key]
-            # Create a heatmap
-            plt.figure(figsize=(8, 6))
-            #plt.rcParams['font.family'] = 'Times New Roman'
-            sns.heatmap(prob_mat[self.data_idx, :][:, self.data_idx], annot=True, cmap='Reds', fmt=".2f", square=True, cbar_kws={"shrink": .8},
-                        xticklabels=self.global_state.user_data.visual_selected_features,
-                        yticklabels=self.global_state.user_data.visual_selected_features)            
-            plt.title(f'Confidence Heatmap for {name}', fontsize=14, fontweight='bold')
-            plt.tight_layout()
-            # Save the plot
-            save_path_conf = os.path.join(self.save_dir, f'{key}confidence_heatmap.jpg')
-            plt.savefig(fname=save_path_conf, dpi=1000)
-            paths.append(save_path_conf)
+            try:
+                prob_mat = boot_prob_dict[key]
+                name = name_map[key]
+                # Create a heatmap
+                plt.figure(figsize=(8, 6))
+                #plt.rcParams['font.family'] = 'Times New Roman'
+                sns.heatmap(prob_mat[self.data_idx, :][:, self.data_idx], annot=True, cmap='Reds', fmt=".2f", square=True, cbar_kws={"shrink": .8},
+                            xticklabels=self.global_state.user_data.visual_selected_features,
+                            yticklabels=self.global_state.user_data.visual_selected_features)            
+                plt.title(f'Confidence Heatmap for {name}', fontsize=14, fontweight='bold')
+                plt.tight_layout()
+                # Save the plot
+                save_path_conf = os.path.join(self.save_dir, f'{key}_confidence_heatmap.jpg')
+                plt.savefig(fname=save_path_conf, dpi=1000)
+                plt.close()  # Close the figure to free memory
+                paths.append(save_path_conf)
+                logger.debug(f"Successfully generated confidence heatmap: {save_path_conf}", "Visualization")
+            except Exception as e:
+                logger.error(f"Failed to generate confidence heatmap for {key}: {str(e)}", "Visualization")
+                plt.close()  # Ensure figure is closed even on error
+                continue
 
         return paths
 
@@ -563,7 +576,7 @@ def test_lagged_visualization():
 
     test_visualizer.plot_lag_pdag(lag_matrix, val_matrix=None, save_path="temp_lagged_graph.pdf", )
     
-    print("Lagged causal graph visualization test completed at temp_lagged_graph.pdf")
+    logger.success("Lagged causal graph visualization completed")
 
 if __name__ == '__main__':
     # test_fixed_pos()

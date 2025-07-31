@@ -128,51 +128,67 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# idea
+# ide
 .idea
 .DS_Store
-
-# data/simulation/dummy
-data/simulation/simulated_data
-preprocess/result
-postprocess/test_result
-causal_analysis/test_result
-simulated_data
-simulated_data/
-gradio_output/
-Gradio/test_for_demo
-demo_data/
-output/
 .vscode
 sftp.json
 .history/
-test_result/
-postprocess/test_data/
-test_for_demo/
-report/test
-causal_analysis/test_data
-algorithm/context/algos/profiles/
-# algorithm/evaluation/benchmarking_integrated_config.py
-# algorithm/evaluation/benchmarking_integrated.py
-# algorithm/evaluation/benchmarking_integrated.sh
-test_output/
-externals/trustworthyAI/
-ts_eda_test_output/
 
+# algorithm
+causal_discovery/context/evaluation/benchmark_logs
+causal_discovery/context/evaluation/benchmarking_integrated_config.json
+causal_discovery/context/evaluation/benchmarking_integrated.py
+causal_discovery/context/evaluation/benchmarking_integrated.sh
+causal_discovery/context/runtime_estimates/archive
+causal_discovery/context/tests
+causal_discovery/wrappers/archive
+causal_inference/test.py
+causal_inference/causal_analysis_evaluation.py
+externals/trustworthyAI/
+causal_discovery/context/algos/consolidated_benchmarking_results.txt
+causal_discovery/context/algos/profiles/
+tiny_copilot.py
+
+# simulator
+data/simulator/benchmark.py
+data/simulator/evaluation.py
+data/simulator/ts_benchmark.py
+data/simulator/archive
+data/simulator/context
+figures/
+improved_figures/
+
+# test data
+simulated_data/
+demo_data/
+gradio_output/
+gradio/test_for_demo
+causal_inference/test_data
+postprocess/test_data/
+
+# test result
+preprocess/result
+postprocess/test_result
+causal_inference/test_result
+test_result/
+output/
+report/test
+test_for_demo/
+test_output/
+ts_eda_test_output/
+causal_discovery/context/benchmarking/merged_results.json
+
+
+# analysis notebooks
 plot.ipynb
 complex_plot.ipynb
 benchmark.ipynb
 
+# gradio demo
+.gradio
+gradio/public/
+gradio/demo_official.py
 
-ts_eda.py
-data/simulation/benchmark.py
-data/simulation/evaluation.py
-# data/simulation/ts_benchmark.py
-algorithm/context/algos/consolidated_benchmarking_results.txt
-# algorithm/context/benchmarking/algorithm_performance_analysis.json
-figures/
-improved_figures/
-Gradio/public/
-
-Gradio/demo_official.py
+# deployment
 copilot.pem

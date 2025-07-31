@@ -1,18 +1,18 @@
+import os
 import requests
 import json
 from typing import Optional, Dict, Any, List
 
 class OllamaClient:
-    def __init__(self, model_name: str = "llama2", base_url: str = "http://localhost:11434"):
+    def __init__(self):
         """
         Initialize the Ollama client.
         
         Args:
             model_name (str): Name of the model to use (default: "llama2")
-            base_url (str): Base URL for Ollama API (default: "http://localhost:11434")
         """
-        self.model_name = model_name
-        self.base_url = base_url.rstrip('/')
+        self.model_name = os.getenv('MODEL', 'qwen3:8b')
+        self.base_url = os.getenv('OLLAMA_BASE_URL', 'http://localhost:11434')
         
     def chat_completion(self, 
                        prompt: str, 
@@ -46,11 +46,7 @@ class OllamaClient:
         }
         
         if json_response:
-            # Add a system message to enforce JSON response
-            messages.insert(0, {
-                "role": "system",
-                "content": "You must respond with valid JSON only."
-            })
+            payload["format"] = "json"
         
         try:
             response = requests.post(

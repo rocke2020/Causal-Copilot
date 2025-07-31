@@ -7,6 +7,7 @@ from causallearn.graph.Edge import Edge
 from causallearn.graph.Endpoint import Endpoint
 from causallearn.utils.DAG2CPDAG import dag2cpdag
 from llm import LLMClient
+from utils.logger import logger
 
 def array2cpdag(adj_array, node_names):
     # for methods return cpdag
@@ -63,7 +64,7 @@ class Judge(object):
         from causallearn.utils.PCUtils.BackgroundKnowledge import BackgroundKnowledge
         bk = BackgroundKnowledge()
         ############Edge Pruning with Bootstrap############
-        print('Bootstrap Pruning Decisioning...')
+        logger.process("Applying bootstrap-based graph pruning")
         revised_graph = full_graph.copy()
         bootstrap_check_dict = bootstrap_recommend(full_graph, boot_probability)
         #print('bootstrap_check_dict: ',bootstrap_check_dict)
@@ -118,7 +119,7 @@ class Judge(object):
 
         ############ Edge Pruning with KCI ############
         kci_forbid_dict = kci_pruning(self.global_state.user_data.processed_data, revised_graph)
-        print('kci_forbid_dict', kci_forbid_dict)
+        logger.debug(f"KCI forbid dictionary: {len(kci_forbid_dict)} entries", "KCI")
         for idx_j, idx_i in kci_forbid_dict.keys():
             revised_graph[idx_i, idx_j] = revised_graph[idx_j, idx_i] = 0
         
@@ -228,7 +229,7 @@ The results of falsify_graph show the output of two tests. The first measures wh
         from causallearn.graph.SHD import SHD
 
         if global_state.algorithm.selected_algorithm in ['PC', 'FCI', 'GES', 'CDNOD'] and not revise:
-            print('Selected Algorithm: ', global_state.algorithm.selected_algorithm)
+            logger.debug(f"Using algorithm: {global_state.algorithm.selected_algorithm}", "Judge")
             if global_state.algorithm.selected_algorithm == 'PC':
                 est_graph = global_state.results.raw_result.G
             elif global_state.algorithm.selected_algorithm == 'CDNOD':

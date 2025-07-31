@@ -13,6 +13,7 @@ from postprocess.visualization import Visualization, convert_to_edges
 from postprocess.judge_functions import edges_to_relationship
 from report.help_functions import *
 from report.inference_report_generation import Inference_Report_generation
+from utils.logger import logger
 import glob
 import ast
 import json 
@@ -53,15 +54,14 @@ def compile_tex_to_pdf_with_refs(tex_file, output_dir=None, clean=True):
             with local.env(TEXINPUTS=":./"):
                 latexmk[args]()
         except Exception as e:
-            print(f"Error in compilation pass")
-            print(str(e))
+            logger.error(f"Error in compilation pass: {str(e)}")
             return False
         
-        print(f"Successfully compiled {tex_file} to {output_dir}")
+        logger.success(f"Successfully compiled {tex_file} to {output_dir}")
         return True
             
     except Exception as e:
-        print(f"Exception occurred: {str(e)}")
+        logger.error(f"Exception occurred: {str(e)}")
         return False
 
 class Report_generation(object):
@@ -148,7 +148,7 @@ class Report_generation(object):
         Background about this dataset: {self.knowledge_docs}
         """
     
-        print("Start to find Introduction")
+        logger.process("Generating introduction section")
         response_dist = self.client.chat_completion(
             prompt=prompt,
             system_prompt="You are an expert in the causal discovery field and helpful assistant.",
@@ -172,7 +172,7 @@ class Report_generation(object):
         Background about this dataset: {self.knowledge_docs}
         """
     
-        print("Start to find Background")
+        logger.process("Generating background section")
         response_background = self.client.chat_completion(
             prompt=prompt,
             system_prompt="You are an expert in the causal discovery field and helpful assistant.",
@@ -238,7 +238,7 @@ The output should be:
             result_parsed[tup] = rel.explanation
         
         variables = self.data.columns
-        print("variables: ", variables)
+        logger.debug(f"Variables: {variables}", "Background")
         zero_matrix = np.zeros((len(variables), len(variables)))
         if result_parsed != {}:
             section2 = """
@@ -574,7 +574,7 @@ The following figure presents distributions of various variables. The orange das
             For example:
             The result graph shows the causal relationship among variables clearly. The {variables[1]} causes the {variables[0]}, ...
             """
-            print("Start to find graph effect")
+            logger.process("Analyzing graph effects and relationships")
             response = self.client.chat_completion(
                 prompt=prompt,
                 system_prompt="You are an expert in the causal discovery field and helpful assistant.",
@@ -684,26 +684,42 @@ The following figure presents distributions of various variables. The orange das
                 width = 0.3  # Approximately 1/3 of textwidth with some spacing
                 # Counter to track position in the row
                 counter = 0
+                valid_images_found = False
+                
                 for key in bootstrap_dict.keys():
                     graph_path = f'{self.visual_dir}/{key}_confidence_heatmap.jpg'
                     caption = f'{name_map[key]}'
-                    # Add subfigure
-                    graph_text += f"""
-                    \\begin{{subfigure}}{{{width}\\textwidth}}
-                            \centering
-                            \includegraphics[width=\linewidth]{{{graph_path}}}
-                            \\vfill
-                            \caption{{{caption}}}
-                    \end{{subfigure}}"""
-                    # Increment counter
-                    counter += 1
-                    # Start a new row after every 3 plots or at the end
-                    if counter % 3 == 0 and counter < len(bootstrap_dict):
-                        graph_text += "\n        \\\\[10pt]"  # Line break and some vertical space
-                graph_text += """
-                \caption{Confidence Heatmap of Different Edges.}
-                \end{figure}    
-                """
+                    
+                    # Check if the image file actually exists before including it in LaTeX
+                    import os
+                    if os.path.exists(graph_path):
+                        valid_images_found = True
+                        # Add subfigure
+                        graph_text += f"""
+                        \\begin{{subfigure}}{{{width}\\textwidth}}
+                                \centering
+                                \includegraphics[width=\linewidth]{{{graph_path}}}
+                                \\vfill
+                                \caption{{{caption}}}
+                        \end{{subfigure}}"""
+                        # Increment counter
+                        counter += 1
+                        # Start a new row after every 3 plots or at the end
+                        if counter % 3 == 0 and counter < len(bootstrap_dict):
+                            graph_text += "\n        \\\\[10pt]"  # Line break and some vertical space
+                    else:
+                        logger.warning(f"Confidence heatmap file not found: {graph_path}", "Report")
+                
+                # Only add closing figure tags if we found valid images
+                if valid_images_found:
+                    graph_text += """
+                    \caption{Confidence Heatmap of Different Edges.}
+                    \end{figure}    
+                    """
+                else:
+                    # Reset graph_text if no valid images were found
+                    graph_text = ""
+                    logger.warning("No confidence heatmap images found - skipping heatmap section in report", "Report")
                 ### Generate text illustration
                 text_map = {'certain_edges': rf'directed edge ($\rightarrow$)', #(->)
                             'uncertain_edges': 'undirected edge ($-$)', #(-)
@@ -758,7 +774,7 @@ The following figure presents distributions of various variables. The orange das
             2. Write in a professional and concise way, and include all relationships provided.
             3. The list must be in latex format
             """
-            print("Start to analyze graph reliability")
+            logger.process("Analyzing graph reliability and confidence")
             response = self.client.chat_completion(
                 prompt=prompt,
                 system_prompt="You are an expert in the causal discovery field and helpful assistant.",
@@ -909,7 +925,7 @@ Help me to write a comparison of the following causal discovery results of diffe
                 return prompt_template
 
             # Non-debug path continues with full report generation
-            print("Start to generate the report")
+            logger.process("Starting report generation")
             # Data info
             df = self.data.copy()
             if self.data.shape[1] > 20:  
@@ -959,10 +975,10 @@ Help me to write a comparison of the following causal discovery results of diffe
             
             # Causal Inference info
             if self.inference_global_state.inference.task_index != -1:
-                print('self.inference_global_state.inference.task_index: ', self.inference_global_state.inference.task_index)
+                logger.debug(f"Inference task index: {self.inference_global_state.inference.task_index}", "Report")
                 self.inf_report = ""
                 for task_index in range(self.inference_global_state.inference.task_index+1):
-                    print('task_index: ', task_index)
+                    logger.debug(f"Processing task index: {task_index}", "Report")
                     self.inf_report += f"\section{{Causal Inference Results for Task {task_index+1}}}\n"
                     inf_report_generator = Inference_Report_generation(self.inference_global_state, self.args, task_index)
                     task_result = inf_report_generator.generation()
@@ -1059,7 +1075,7 @@ Help me to write a comparison of the following causal discovery results of diffe
         # print('check latex bug')
         # self.latex_bug_checking(f'{save_path}/report.tex')
         # Compile the .tex file to PDF using pdflatex
-        print('start compilation')
+        logger.process("Starting LaTeX compilation")
         compile_tex_to_pdf_with_refs(f'{save_path}/report.tex', save_path)
 
 def test(args, global_state):

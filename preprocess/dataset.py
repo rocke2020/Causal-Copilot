@@ -87,6 +87,7 @@ def knowledge_info(args, global_state):
     :return: GlobalState
     '''
     from llm import LLMClient
+    from utils.logger import logger
     client = LLMClient(args)
     data = global_state.user_data.processed_data
     table_name = args.data_file
@@ -140,11 +141,9 @@ def knowledge_info(args, global_state):
         json_response=False
     )
     knowledge_doc_for_user = response2
+    logger.detail(f"Knowledge docs for user: {knowledge_doc_for_user}")
     knowledge_docs_for_user = [knowledge_doc_for_user]
-    print(knowledge_docs_for_user)
     global_state.user_data.knowledge_docs_for_user = knowledge_docs_for_user
-
-    
 
     return global_state
 

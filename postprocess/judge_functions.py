@@ -3,6 +3,7 @@ from sympy.stats.rv import probability
 import ast
 import json 
 from llm import LLMClient
+from utils.logger import logger
 from postprocess.visualization import Visualization
 from collections import Counter
 import networkx as nx
@@ -22,7 +23,7 @@ def bootstrap_iteration(data, ts, algorithm, hyperparameters):
     import random
     import math
     import pandas as pd
-    import algorithm.wrappers as wrappers
+    import causal_discovery.wrappers as wrappers
 
     n = data.shape[0]
 
@@ -133,7 +134,8 @@ def bootstrap(data, full_graph, algorithm, hyperparameters, boot_num, ts, parall
 
         # pool.close()
         # pool.join()
-        print('Parallel computing')
+        from utils.logger import logger
+        logger.process("Running parallel bootstrap analysis")
         boot_effect_save = Parallel(n_jobs=4)(
                 delayed(bootstrap_iteration)(data, ts, algorithm, hyperparameters)
                 for _ in range(boot_num)
@@ -298,9 +300,9 @@ def call_llm_new(args, prompt, prompt_type):
             llm_answer[pair] = {'result': result,
                                 'explanation': explanation}
         except Exception as e:
-            print('The returned LLM evaluation response is wrong, try again')
-            print(lines)
-            print(e)
+            logger.warning('LLM evaluation response format error, retrying')
+            logger.debug(f"Response lines: {len(lines)}", "LLM")
+            logger.debug(f"Error: {str(e)}", "LLM")
             llm_answer = call_llm_new(args, prompt, prompt_type)
     return llm_answer
 
@@ -467,7 +469,7 @@ def kci_pruning(data, revised_graph):
         for idx_2 in range(idx_1+1, len(data.columns)):
             p_value = test(idx_1, idx_2)
             if p_value > 0.05 and revised_graph[idx_1, idx_2]!=0:
-                print(f'({data.columns[idx_1]}, {data.columns[idx_2]}): {p_value}')
+                logger.debug(f'KCI test result ({data.columns[idx_1]}, {data.columns[idx_2]}): {p_value}', "KCI")
                 kci_forbid_dict[idx_1,idx_2] = p_value
     return kci_forbid_dict
 
@@ -565,17 +567,17 @@ def check_cycle(args, data, graph):
 
     # Output the result
     if acyclic:
-        print("The graph is acyclic (no cycles).")
+        logger.success("Graph is acyclic (no cycles detected)")
     else:
-        print("The graph has cycles.")
+        logger.warning("Graph contains cycles")
         cycles = list(nx.simple_cycles(G))
+        logger.debug(f"Found {len(cycles)} cycles", "CycleCheck")
         for cycle in cycles:
-            print(cycle)
             prompt = " -> ".join(f"{n}" for n in cycle)
             prompt +=  f" -> {cycle[0]}"
-            print(prompt)
+            logger.debug(f"Cycle prompt: {prompt[:100]}...", "LLM")
             remove_nodes = LLM_remove_cycles(args, prompt)
-            print('remove_nodes',remove_nodes)
+            logger.debug(f"Remove nodes: {remove_nodes}", "CycleRemoval")
             ind_i = columns.str.lower().get_loc(remove_nodes[0].lower())
             ind_j = columns.str.lower().get_loc(remove_nodes[1].lower())
             graph[ind_i, ind_j] = graph[ind_j, ind_i] = 0

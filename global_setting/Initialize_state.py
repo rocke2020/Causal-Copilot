@@ -9,8 +9,9 @@ import json
 import torch
 from datetime import datetime
 from global_setting.state import GlobalState
-from data.simulation.simulation import SimulationManager
+from data.simulator.simulation import SimulationManager
 from llm import LLMClient
+from utils.logger import logger
 
 
 
@@ -114,10 +115,10 @@ def global_state_initialization(args: argparse.Namespace = None) -> GlobalState:
 
     # Extract information from user queries
     # get all available algorithms
-    algorithms = [algo.split('.')[0] for algo in os.listdir('algorithm/context/algos') if algo.endswith('.txt') and 'tagging' not in algo and 'guideline' not in algo]  
+    algorithms = [algo.split('.')[0] for algo in os.listdir('causal_discovery/context/algos') if algo.endswith('.txt') and 'tagging' not in algo and 'guideline' not in algo]  
     algorithms = ', '.join(algorithms)
 
-    print(algorithms)
+    logger.debug(f"Available algorithms: {len(algorithms.split(', '))}", "Init")
 
     client = LLMClient(args)
     prompt = (f"Based on the query that I provided: {user_query} \n\n; "
@@ -146,20 +147,22 @@ def global_state_initialization(args: argparse.Namespace = None) -> GlobalState:
               "Options of value (float): A numeric value that is greater than 0. \n\n"
               "8. Does the user accept the output graph including undirected edges/undeterministic directions:"
               "Key: 'accept_CPDAG'. \n\n"
-              "Options of value (bool): True, False. \n\n"
+              "Options of value (bool, by default is True, only if the user explicitly asks for it to be False): True, False. \n\n"
               "9. Is the dataset a time-series dataset or a tabular dataset:"
               "Key: 'time_series'. \n\n"
-              "Options of value (bool): True, False. \n\n"
+              "Options of value (bool, by default is False, only if the user explicitly asks for it to be True): True, False. \n\n"
               "However, for each key, if the value extracted from queries does not match provided options, or if the queries do not provide enough information and you cannot summarize them,"
               "the value for such key should be set to None! \n\n"
               "Just give me the output in a json format, do not provide other information! \n\n")
 
     response = client.chat_completion(
         prompt=prompt,
-        system_prompt="You are a helpful assistant.",
+        system_prompt="You are a helpful assistant. You are a causal discovery expert. You are given a user query and you need to extract the information from the query and return a json object.",
         json_response=True
     )
     info_extracted = response
+
+    logger.debug(f"Info extracted: {info_extracted}", "Init")
 
     # data management
     if args.demo_mode:
