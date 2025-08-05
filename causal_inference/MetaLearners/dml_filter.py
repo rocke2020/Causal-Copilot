@@ -32,14 +32,6 @@ class HTE_Filter(object):
 
         return prompt_template
 
-    def parse_response(self, response):
-        try:
-            algo_candidates = json.loads(response)
-        except json.JSONDecodeError:
-            print("Error: Unable to parse JSON response")
-            return {}
-        return algo_candidates
-
     def forward(self, global_state, query):
         prompt = self.create_prompt(global_state.user_data.processed_data, global_state.statistics.description, query)
 
@@ -48,7 +40,7 @@ class HTE_Filter(object):
             system_prompt="You are a helpful assistant for MetaLearners dml_filter.",
             json_response=True
         )
-        hte_algo = self.parse_response(response)
+        hte_algo = response
         print('hte algo response:', hte_algo)
 
         global_state.inference.hte_algo_json = hte_algo

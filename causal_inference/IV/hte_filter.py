@@ -30,16 +30,7 @@ class HTE_Filter(object):
         for placeholder, value in replacements.items():
             prompt_template = prompt_template.replace(placeholder, value)
 
-        return prompt_template
-
-    def parse_response(self, response):
-        try:
-            algo_candidates = json.loads(response)
-        except json.JSONDecodeError:
-            from utils.logger import logger
-            logger.error("Unable to parse JSON response")
-            return {}
-        return algo_candidates
+        return prompt_template 
 
     def forward(self, global_state, query):
         prompt = self.create_prompt(global_state.user_data.processed_data, global_state.statistics.description, query)
@@ -49,7 +40,7 @@ class HTE_Filter(object):
             system_prompt="You are a helpful assistant for IV hte_filter.",
             json_response=True
         )
-        hte_algo = self.parse_response(response)
+        hte_algo = response
         from utils.logger import logger
         logger.debug(f"HTE algorithm response received", "HTE")
 

@@ -59,15 +59,6 @@ class UpliftFilter:
         else:
             return 'continuous'
     
-    def parse_response(self, response):
-        """Parse the LLM response to extract algorithm suggestions"""
-        try:
-            algo_candidates = json.loads(response)
-        except json.JSONDecodeError:
-            print("Error: Unable to parse JSON response")
-            return {}
-        return algo_candidates
-    
     def forward(self, global_state, query="What is the best uplift modeling algorithm for this dataset?"):
         """Select the appropriate uplift algorithm based on data characteristics"""
         # Determine if the outcome is binary or continuous
@@ -92,7 +83,7 @@ class UpliftFilter:
         )
         
         # Parse and store the algorithm suggestion
-        algo_candidates = self.parse_response(response)
+        algo_candidates = response
         global_state.inference.uplift_algo_json = algo_candidates
         
         return global_state

@@ -1,6 +1,7 @@
 from llm import LLMClient
 import json
 import os
+from utils.logger import logger
 
 # Class to get hte_algo suggested by LLM
 class HTE_Filter(object):
@@ -32,15 +33,6 @@ class HTE_Filter(object):
 
         return prompt_template
 
-    def parse_response(self, response):
-        try:
-            algo_candidates = json.loads(response)
-        except json.JSONDecodeError:
-            from utils.logger import logger
-            logger.error("Unable to parse JSON response")
-            return {}
-        return algo_candidates
-
     def forward(self, global_state, query):
         prompt = self.create_prompt(global_state.user_data.processed_data, global_state.statistics.description, query)
 
@@ -49,7 +41,7 @@ class HTE_Filter(object):
             system_prompt="You are a helpful assistant for DRL hte_filter.",
             json_response=True
         )
-        hte_algo = self.parse_response(response)
+        hte_algo = response
         logger.debug(f"HTE algorithm response received", "HTE")
 
         global_state.inference.hte_algo_json = hte_algo

@@ -127,8 +127,6 @@ importlib_metadata==8.6.1
 zipp==3.21.0
 dotenv==0.9.9
 python-dotenv==1.0.1
-git+https://github.com/AminAlam/fa2_modified.git
-
 
 econml==0.15.1
 sparse==0.16.0

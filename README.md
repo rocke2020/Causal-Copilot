@@ -112,68 +112,194 @@ We provide some examples of our system automatically generated reports for open-
   🔍 Try out our interactive demo: <a href="https://causalcopilot.com/"><b>Causal-Copilot Live Demo</b></a>
 </p>
 
-
 ### Local Deployment
 
-- **Python 3.8+**
-- Required Python libraries (specified in `setup/requirements_cpu.txt` and `setup/requirements_gpu.txt`)
-- Required LaTeX packages (`tinyTex`)
+We **strongly recommend using Docker** for the most stable and reliable installation, as it handles all system dependencies including LaTeX packages automatically.
 
-Ensure you have the necessary dependencies installed by choosing the appropriate dependencies (CPU/GPU + Tex):
+#### 🐳 Docker Installation (Recommended)
 
-#### CPU Dependencies
+**Prerequisites:**
+- Docker installed on your system
 
-If you don't have a Nvidia GPU, you can't use the GPU accelerated algorithms (e.g. AcceleratedLiNGAM). You can use the CPU version by running:
-
+**For CPU version:**
 ```bash
-pip install -r setup/requirements_cpu.txt --no-deps
+# Build the Docker image
+docker build -f Dockerfile.cpu -t causal-copilot-cpu .
+
+# Run the container
+docker run -it --rm -v $(pwd):/app -p 7860:7860 causal-copilot-cpu
 ```
 
-#### GPU Dependencies
-
-If you have a Nvidia GPU, you can use the GPU accelerated algorithms by running:
-
+**For GPU version:**
 ```bash
-pip install -r setup/requirements_gpu.txt --no-deps
+# Build the Docker image
+docker build -f Dockerfile.gpu -t causal-copilot-gpu .
+
+# Run the container with GPU support
+docker run -it --rm --gpus all -v $(pwd):/app -p 7860:7860 causal-copilot-gpu
 ```
 
+#### 🔧 Conda Environment Installation
 
-### Tex Dependencies
+**⚠️ Note:** Conda environment installation might not be stable and may have compatibility issues with LaTeX dependencies required for report generation. We recommend using Docker instead.
 
-Install the `tinyTex` package to generate PDF reports:
+**Prerequisites:**
+- **Python 3.10** (create a new conda environment first)
+- Required Python libraries (specified in `requirements_cpu.txt` and `requirements_gpu.txt`)
+- Required LaTeX packages (`tinyTeX`)
 
+**Step 1: Create Python 3.10 Environment**
+```bash
+# Create a new conda environment with Python 3.10
+conda create -n causal-copilot python=3.10
+conda activate causal-copilot
+```
+
+**Step 2: Run Setup Script**
+
+For CPU version:
+```bash
+bash setup_cpu.sh
+```
+
+For GPU version (if you have NVIDIA GPU):
+```bash
+bash setup_gpu.sh
+```
+
+<!-- **Manual Dependencies (if setup scripts fail):**
+
+For CPU version:
+```bash
+pip install -r requirements_cpu.txt --no-deps
+```
+
+For GPU version:
+```bash
+pip install -r requirements_gpu.txt --no-deps
+```
+
+**LaTeX Dependencies:**
+
+Install the `tinyTeX` package to generate PDF reports: -->
+<!-- 
 For Mac:
+```bash
+rm -rf ~/Library/TinyTeX
+wget -qO- "https://yihui.org/tinytex/install-bin-unix.sh" | sh
+export PATH="$PATH:$HOME/Library/TinyTeX/bin/universal-darwin" 
+source ~/.zshrc
 
+tlmgr update --self
+tlmgr install fancyhdr caption subcaption nicefrac microtype lipsum graphics natbib doi
+``` -->
+
+<!-- For Linux:
+```bash
+rm -rf ~/.TinyTeX
+wget -qO- "https://yihui.org/tinytex/install-bin-unix.sh" | sh
+export PATH="$PATH:$HOME/.TinyTeX/bin/x86_64-linux"
+source ~/.bashrc
+
+tlmgr update --self
+tlmgr install fancyhdr caption subcaption nicefrac microtype lipsum graphics natbib doi
+``` -->
+
+#### 🔧 Environment Configuration
+
+Causal-Copilot uses environment variables for configuration. Create a `.env` file in the project root directory:
+
+**🤖 LLM Support:**
+- **OpenAI** (default): Full support for GPT models with reliable performance
+- **OpenRouter**: Access to various state-of-the-art LLMs (Claude, Llama, Mistral, etc.)  
+- **Ollama** (local): Run LLMs locally for privacy and cost savings
+
+⚠️ **Performance Note**: Local LLM processing speed depends on your machine specifications. Instruction-following capabilities may vary across models and can affect analysis quality and runtime duration.
+
+**Step 1: Copy the example configuration**
+```bash
+cp .env.example .env
 ```
-$ rm -rf ~/Library/TinyTeX
-$ wget -qO- "https://yihui.org/tinytex/install-bin-unix.sh" | sh
-$ export PATH="$PATH:$HOME/Library/TinyTeX/bin/universal-darwin" 
-$ source ~/.zshrc
 
-$ tlmgr update --self
-$ tlmgr install fancyhdr caption subcaption nicefrac microtype lipsum graphics natbib doi
+**Step 2: Configure your settings**
 
+The key environment variables you need to configure:
+
+| Variable | Description | Default | Required |
+|----------|-------------|---------|----------|
+| `LLM_PROVIDER` | LLM provider (`openai`, `ollama`, `openrouter`) | `ollama` | ✅ |
+| `LLM_MODEL` | Model name (e.g., `gpt-4`, `llama3.2`, `mistral`) | `llama3.2` | ✅ |
+| `OPENAI_API_KEY` | OpenAI API key | - | ⚠️ (if using OpenAI) |
+| `OLLAMA_BASE_URL` | Ollama server base URL | `http://localhost:11434` | ⚠️ (if using Ollama) |
+| `OUTPUT_REPORT_DIR` | Directory for generated reports in chatbot demo| `output_report` | ❌ |
+| `OUTPUT_GRAPH_DIR` | Directory for generated graphs in chatbot demo | `output_graph` | ❌ |
+
+**Example configurations:**
+
+For **OpenAI**:
+```bash
+LLM_PROVIDER=openai
+LLM_MODEL=gpt-4o
+OPENAI_API_KEY=sk-your-openai-api-key-here
 ```
 
-For Linux:
-
+For **Openrouter**:
+```bash
+LLM_PROVIDER=openrouter
+LLM_MODEL=anthropic/claude-sonnet-4
+OPENAI_API_KEY=sk-your-openrouter-api-key-here
 ```
-$ rm -rf ~/.TinyTeX
-$ wget -qO- "https://yihui.org/tinytex/install-bin-unix.sh" | sh
-$ export PATH="$PATH:$HOME/.TinyTeX/bin/x86_64-linux"
-$ source ~/.bashrc
 
-$ tlmgr update --self
-$ tlmgr install fancyhdr caption subcaption nicefrac microtype lipsum graphics natbib doi
+For **Ollama** (local):
+```bash
+LLM_PROVIDER=ollama
+LLM_MODEL=llama3.2
+OLLAMA_BASE_URL=http://localhost:11434
 ```
+
+**⚠️ Important Notes:**
+- Keep your `.env` file secure and never commit it to version control
+- For Ollama, make sure you have the model downloaded: `ollama pull llama3.2`
+- The web interface will guide you through the configuration if variables are missing
 
 ---
 
 ## Usage
 
+There are two ways to use Causal-Copilot:
+
+### 1. 🖥️ Command Line Interface (CLI)
+
+Use the CLI for focused causal discovery analysis:
+
 ```bash
 python main.py --data_file your_data --apikey your_openai_apikey --initial_query your_user_query
 ```
+
+**Features:**
+- Primarily focuses on causal discovery algorithms
+- Command-line based interaction
+- Suitable for batch processing and scripting
+
+### 2. 🌐 Web Chatbot Interface (Recommended)
+
+Use the web interface for comprehensive causal analysis:
+
+```bash
+python web_demo/demo.py
+```
+
+**Features:**
+- Complete causal analysis pipeline including:
+  - Causal discovery
+  - Causal inference
+  - Auxiliary analysis tools
+- Interactive chat-style interface
+- Real-time visualizations
+- Automated PDF report generation
+- User-friendly for non-experts
+
+**Access:** After running the command, open your browser and navigate to the provided local URL (typically `http://localhost:7860` or public gradio set if you set share=True).
 
 ## License
 
