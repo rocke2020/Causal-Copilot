@@ -135,3 +135,5 @@ xgboost==3.0.0
 dcor==0.6.0
 CEM-LinearInf==0.0.1
 slicer==0.0.8
+partd==1.4.2
+toolz==1.0.0

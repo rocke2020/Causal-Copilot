@@ -127,7 +127,7 @@ def global_state_initialization(args: argparse.Namespace = None) -> GlobalState:
               "1. Describe whether the relationship between the variables are assumed to be linear or not:"
               "Key: 'linearity'. \n\n"
               "Options of value (bool): True, False. \n\n"
-              "2. Describe whether the when fitting models between two variables, the error terms are assumed to be Gaussian or not:"
+              "2. Describe whether the fitting models between two variables, the error terms are assumed to be Gaussian or not:"
               "Key: 'gaussian_error'. \n\n"
               "Options of value (bool): True, False. \n\n"
               "3. The significance level (denoted as alpha) for doing statistical testing in the following analysis:"
@@ -196,8 +196,3 @@ def global_state_initialization(args: argparse.Namespace = None) -> GlobalState:
         global_state.user_data.accept_CPDAG = info_extracted["accept_CPDAG"]
 
     return global_state
-
-
-
-
-
