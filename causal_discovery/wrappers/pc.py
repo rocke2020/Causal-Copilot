@@ -1,35 +1,39 @@
-import numpy as np
-import pandas as pd
-from typing import Dict, Tuple
-import json
 import os
 
 # use the local causal-learn package
 import sys
-import os
+from typing import Dict, Tuple
+
+import numpy as np
+import pandas as pd
+
 root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-causal_learn_dir = os.path.join(root_dir, 'externals', 'causal-learn')
+causal_learn_dir = os.path.join(root_dir, "externals", "causal-learn")
 if not os.path.exists(causal_learn_dir):
-    raise FileNotFoundError(f"Local causal-learn directory not found: {causal_learn_dir}, please git clone the submodule of causal-learn")
-algorithm_dir = os.path.join(root_dir, 'algorithm')
+    raise FileNotFoundError(
+        f"Local causal-learn directory not found: {causal_learn_dir}, please git clone the submodule of causal-learn"
+    )
+algorithm_dir = os.path.join(root_dir, "algorithm")
 sys.path.append(root_dir)
 sys.path.append(algorithm_dir)
 sys.path.insert(0, causal_learn_dir)
 
+import torch
 from causallearn.graph.GraphClass import CausalGraph
+from causallearn.graph.GraphNode import GraphNode
 from causallearn.search.ConstraintBased.PC import pc as cl_pc
 from causallearn.utils.PCUtils.BackgroundKnowledge import BackgroundKnowledge
-from causallearn.graph.GraphNode import GraphNode
-from causal_discovery.wrappers.base import CausalDiscoveryAlgorithm
-from causal_discovery.evaluation.evaluator import GraphEvaluator
 
-import torch
+from causal_discovery.evaluation.evaluator import GraphEvaluator
+from causal_discovery.wrappers.base import CausalDiscoveryAlgorithm
+
 cuda_available = torch.cuda.is_available()
 try:
     from externals.acceleration.pc.pc import accelerated_pc
-except Exception as e: 
+except Exception as e:
+    from utils.logger import logger
+
     if not cuda_available:
-        from utils.logger import logger
         logger.debug("CUDA not available, using CPU acceleration", "PC")
     logger.debug(f"Acceleration import error: {e}", "PC")
 
@@ -204,10 +208,9 @@ class PC(CausalDiscoveryAlgorithm):
     def test_algorithm(self):
         # Generate sample data with linear relationships
         import time
-        import os
+
         import numpy as np
-        import pandas as pd
-        from causal_discovery.evaluation.evaluator import GraphEvaluator
+
         from data.simulator.dummy import DataSimulator
 
         # Fix all random seeds for reproducibility

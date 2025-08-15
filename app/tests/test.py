@@ -10,7 +10,8 @@ logger.add(
 )
 
 import dask.array as da
-
+from plumbum.cmd import latexmk
+from plumbum import local
 
 def main():
     logger.info("end")

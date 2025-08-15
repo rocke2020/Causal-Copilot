@@ -1,29 +1,42 @@
-import numpy as np
-import cupy as cp
-import dask.array as da
-from gpucsl.pc.pc import GaussianPC, DiscretePC
-import networkx as nx
-
 # use the local causal-learn package
 import os
 import sys
-root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-causal_learn_dir = os.path.join(root_dir, 'externals', 'causal-learn')
+import cupy as cp
+import dask.array as da
+import networkx as nx
+import numpy as np
+from gpucsl.pc.pc import DiscretePC, GaussianPC
+
+root_dir = os.path.dirname(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+)
+
+causal_learn_dir = os.path.join(root_dir, "externals", "causal-learn")
 if not os.path.exists(causal_learn_dir):
-    raise FileNotFoundError(f"Local causal-learn directory not found: {causal_learn_dir}, please git clone the submodule of causal-learn")
+    raise FileNotFoundError(
+        f"Local causal-learn directory not found: {causal_learn_dir}, please git clone the submodule of causal-learn"
+    )
 else:
     sys.path.insert(0, causal_learn_dir)
 
-from causallearn.graph.GraphClass import CausalGraph
-from causallearn.search.ConstraintBased.PC import pc
-from causallearn.utils.PCUtils import SkeletonDiscovery, UCSepset, Meek
-from typing import Tuple, Dict
 import itertools
+from typing import Dict, Tuple
+
+from causallearn.graph.GraphClass import CausalGraph
+
 sys.path.append(os.path.join(root_dir, 'externals', 'pc_adjacency_search'))
-import gpucmiknn
-import globals
-from gpu_ci import gpu_single, gpu_row
+
+# Try to import GPU acceleration modules
+try:
+    import globals
+    import gpucmiknn
+    from gpu_ci import gpu_row, gpu_single
+
+    GPU_ACCELERATION_AVAILABLE = True
+except ImportError as e:
+    print(f"Warning: GPU acceleration not available: {e}")
+    GPU_ACCELERATION_AVAILABLE = False
 
 def apply_rules(dag: nx.DiGraph):
     def non_adjacent(g, v_1, v_2):
@@ -226,6 +239,11 @@ def chi_square_gpu_gpucsl(data: np.ndarray, alpha: float, depth: int, node_names
 
 # CMIknn with GPU acceleration
 def cmiknn_gpu(data: np.ndarray, alpha: float, depth: int, node_names: list) -> Tuple[np.ndarray, Dict, CausalGraph]:
+    if not GPU_ACCELERATION_AVAILABLE:
+        raise ImportError(
+            "GPU acceleration modules are not available. Please compile the GPU extensions or use CPU-based algorithms."
+        )
+
     if depth < 0:
         depth = data.shape[1]
 
@@ -309,6 +327,12 @@ def accelerated_pc(
         Tuple containing adjacency matrix, info dictionary, and CausalGraph object.
     """
     node_names = [str(i) for i in range(data.shape[1])]
+
+    # Check if GPU acceleration is available for methods that require it
+    if indep_test in ["cmiknn"] and not GPU_ACCELERATION_AVAILABLE:
+        raise ImportError(
+            f"GPU acceleration is not available for {indep_test}. Please compile the GPU extensions or use CPU-based alternatives like 'fisherz'."
+        )
 
     if indep_test == 'fisherz':
         return fisherz_gpu_gpucsl(data, alpha, depth, node_names)
