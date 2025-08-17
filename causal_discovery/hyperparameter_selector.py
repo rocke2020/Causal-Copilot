@@ -19,7 +19,9 @@ class HyperparameterSelector:
             algorithm_optimum_reason = algorithm_description + "\n" + algorithm_optimum_reason
         except:
             algorithm_optimum_reason = "User specifies this algorithm."
-
+        logger.info(f'{algorithm_optimum_reason = }')
+        logger.info(f'{global_state = }')
+        logger.info(f'{selected_algo = }')
         # Select hyperparameters
         hyper_suggest = self.select_hyperparameters(global_state, selected_algo, hp_context, algorithm_optimum_reason)
         global_state.algorithm.algorithm_arguments = hyper_suggest
@@ -103,7 +105,7 @@ class HyperparameterSelector:
         
         response = self.llm_client.chat_completion("Please select the best hyperparameters for the algorithm.",
                                                     system_prompt=hp_prompt, json_response=True,  temperature=0.0,
-                                                    model="gpt-4o")
+                                                    )
 
         hyper_suggest = response
         global_state.algorithm.algorithm_arguments_json = hyper_suggest

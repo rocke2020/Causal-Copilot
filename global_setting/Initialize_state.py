@@ -162,7 +162,7 @@ def global_state_initialization(args: argparse.Namespace = None) -> GlobalState:
     )
     info_extracted = response
 
-    logger.debug(f"Info extracted: {info_extracted}", "Init")
+    logger.info(f"Info extracted: {info_extracted}", "Init")
 
     # data management
     if args.demo_mode:
@@ -184,6 +184,10 @@ def global_state_initialization(args: argparse.Namespace = None) -> GlobalState:
     global_state.algorithm.selected_algorithm = info_extracted["selected_algorithm"]
     global_state.statistics.time_series = info_extracted["time_series"]
     # GPU availability
+    if torch.cuda.is_available():
+        logger.info("Current machine supports CUDA, some algorithms can be accelerated by GPU if needed.", "Init")
+    else:
+        logger.warning("Current machine doesn't support CUDA, do not choose any GPU-powered algorithms.", "Init")
     global_state.statistics.gpu_available = torch.cuda.is_available()
 
     if info_extracted["waiting_minutes"] is not None:

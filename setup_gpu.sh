@@ -79,6 +79,7 @@ install_linux_deps() {
             # Install LaTeX
             if ! command_exists pdflatex; then
                 echo "📄 Installing TeX Live..."
+                sudo apt install latexmk
                 sudo apt-get install -y texlive-latex-base texlive-latex-extra texlive-fonts-recommended
             fi
             

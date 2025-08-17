@@ -24,7 +24,7 @@ class LogLevel(Enum):
     CRITICAL = 7
 
 
-class Colors:
+class ColorsOrig:
     """ANSI color codes for terminal output"""
     # Basic colors
     BLACK = '\033[30m'
@@ -52,6 +52,36 @@ class Colors:
     ITALIC = '\033[3m'
     UNDERLINE = '\033[4m'
     RESET = '\033[0m'
+
+
+class Colors:
+    """Empty string for ANSI color codes for terminal output"""
+    # Basic colors
+    BLACK = ''
+    RED = ''
+    GREEN = ''
+    YELLOW = ''
+    BLUE = ''
+    MAGENTA = ''
+    CYAN = ''
+    WHITE = ''
+    
+    # Bright colors
+    BRIGHT_BLACK = ''
+    BRIGHT_RED = ''
+    BRIGHT_GREEN = ''
+    BRIGHT_YELLOW = ''
+    BRIGHT_BLUE = ''
+    BRIGHT_MAGENTA = ''
+    BRIGHT_CYAN = ''
+    BRIGHT_WHITE = ''
+    
+    # Styles
+    BOLD = ''
+    DIM = ''
+    ITALIC = ''
+    UNDERLINE = ''
+    RESET = ''
 
 
 class Icons:
