@@ -141,6 +141,7 @@ class EDA(object):
             selected_features = important_features[:max_features]
 
         # Update self.data with selected features
+        logger.info(f'{len(selected_features) = }')
         self.data = df[selected_features]
 
     def get_optimal_layout(
@@ -329,6 +330,7 @@ class EDA(object):
                         correlation_matrix.columns[j],
                     )
                     correlation_summary[(var_i, var_j)] = correlation_matrix.iloc[i, j]
+        logger.info(f'{len(correlation_summary) = }, {correlation_summary = }')
         return correlation_summary
 
     def additional_analysis(self):
