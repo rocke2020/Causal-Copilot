@@ -64,7 +64,7 @@ class PydanticHandler:
 
 class LLMClient:
     def __init__(self, args=None):
-        """
+        """ TODO del args which is not used.
         Initialize the LLM client.
         
         Args:

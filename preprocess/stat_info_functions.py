@@ -383,11 +383,12 @@ def check_instantaneous(df: pd.DataFrame) -> bool:
 ########################################################################################################################
 
 def data_preprocess (clean_df: pd.DataFrame, ts: bool = False):
-    '''
+    '''Convert category data to numeric data and then update clean_df, and return column_type, overall_type.
+
     :param df: Dataset in Panda DataFrame format.
     :param ratio: threshold to remove column.
     :param ts: indicator of time-series data.
-    :return: cleaned data, indicator of missingness in cleaned data, overall data type, data type of each feature.
+    :return: column_type, overall_type, indicator of missingness in cleaned data, overall data type, data type of each feature.
     '''
 
     # Data Type Classification
@@ -430,6 +431,7 @@ def data_preprocess (clean_df: pd.DataFrame, ts: bool = False):
     # Convert category data to numeric data
     categorical_features = [key for key, value in column_type.items() if value == "Category"]
 
+    # Convert category data to numeric data, and update clean_df
     for column in categorical_features:
         clean_df[column] = pd.Categorical(clean_df[column])
         clean_df[column] = clean_df[column].cat.codes.replace(-1, np.nan) # Keep NaN while converting    
@@ -440,7 +442,7 @@ def data_preprocess (clean_df: pd.DataFrame, ts: bool = False):
 # print(column_type)
 
 def imputation(df: pd.DataFrame, column_type: dict, ts: bool = False):
-    '''
+    '''Imputing missing values and then Z-score normalization.
     :param df: cleaned and converted data in Pandas DataFrame format.
     :param column_type: data type of each column.
     :param ts: indicator of time-series data.
@@ -822,7 +824,7 @@ def stat_info_collection(global_state):
     :param global_state: GlobalState object to update and use.
     :return: updated GlobalState object.
     '''
-    logger.detail("Starting statistical analysis of dataset...")
+    logger.detail(f"Starting statistical analysis of dataset...\n{global_state = }")
     if global_state.statistics.heterogeneous and global_state.statistics.domain_index is not None:
         domain_index = global_state.statistics.domain_index
         if domain_index in global_state.user_data.raw_data.columns:
@@ -857,12 +859,12 @@ def stat_info_collection(global_state):
 
     # Data pre-processing
     logger.detail("Analyzing data types and characteristics...")
-    each_type, dataset_type = data_preprocess(clean_df = data, ts=global_state.statistics.time_series)
+    column_type, dataset_type = data_preprocess(clean_df = data, ts=global_state.statistics.time_series)
     logger.detail("Data preprocessing completed")
 
     # Update global state
     global_state.statistics.data_type = dataset_type["Data Type"]
-    global_state.statistics.data_type_column = each_type
+    global_state.statistics.data_type_column = column_type
     logger.detail(f"Dataset type identified: {dataset_type['Data Type']}")
 
 
@@ -870,7 +872,7 @@ def stat_info_collection(global_state):
     logger.detail("Checking for missing values...")
     if global_state.statistics.missingness or global_state.statistics.missingness is None:
         logger.detail("Performing data imputation...")
-        imputed_data = imputation(df=data, column_type=each_type, ts=global_state.statistics.time_series)
+        imputed_data = imputation(df=data, column_type=column_type, ts=global_state.statistics.time_series)
         logger.detail("Data imputation completed")
     else:
         imputed_data = data
