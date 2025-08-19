@@ -80,6 +80,7 @@ class Reranker:
         algo_candidates = global_state.algorithm.algorithm_candidates
         algo_candidates = {algo: algo_candidates[algo] for algo in algo_candidates if algo in all_algos}
 
+        # TODO del the selected_algorithm, because the same logic in filter.py, only diff is the justification becomes empty here.
         # if user has already selected an algorithm, only keep the selected algorithm in the algo_candidates
         if global_state.algorithm.selected_algorithm is not None:
             algo_candidates = {global_state.algorithm.selected_algorithm: {'description': '', 'justification': ''}}

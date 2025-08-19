@@ -3,6 +3,7 @@ import os
 import torch
 from utils.logger import logger
 from llm import LLMClient
+from global_setting.state import GlobalState
 
 TOP_K = 2
 
@@ -11,7 +12,7 @@ class Filter(object):
         self.args = args
         self.llm_client = LLMClient(args)
 
-    def forward(self, global_state):
+    def forward(self, global_state: GlobalState):
         if global_state.algorithm.selected_algorithm is not None:
             logger.detail(f"User has already selected the algorithm: {global_state.algorithm.selected_algorithm}, skip the filtering process.")
             global_state.algorithm.algorithm_candidates = {
@@ -45,7 +46,7 @@ class Filter(object):
 
         return global_state
 
-    def load_prompt_context(self, global_state):
+    def load_prompt_context(self, global_state: GlobalState):
         # Load algorithm context
         if global_state.statistics.time_series:
             tagging_path = "causal_discovery/context/algos/ts_tagging.txt"
