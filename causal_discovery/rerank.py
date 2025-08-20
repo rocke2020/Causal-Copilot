@@ -6,6 +6,7 @@ from .runtime_estimators.runtime_estimator import RuntimeEstimator
 from llm import LLMClient
 from .context.algos.utils.json2txt import create_filtered_benchmarking_results, create_filtered_benchmarking_results_ts
 from utils.logger import logger
+
 class Reranker:
     def __init__(self, args):
         self.args = args
@@ -97,7 +98,7 @@ class Reranker:
             }
 
             return global_state.algorithm.selected_algorithm
-        
+        # global_state.statistics.sample_size, global_state.statistics.feature_number = data.shape
         time_info = self.runtime_estimate(algo_candidates, global_state.statistics.sample_size, global_state.statistics.feature_number)
         
         prompt = self.create_prompt(global_state, algo_info, time_info)
@@ -143,6 +144,28 @@ class Reranker:
         return "\n".join(runtime_strings)
     
     def algo_can2string(self, algo_candidates):
+        """
+        Convert algorithm candidates dictionary to formatted string representation.
+        This method takes a dictionary of algorithm candidates and converts them into
+        a formatted string representation that includes the algorithm name, description,
+        and justification for each candidate.
+        Args:
+            algo_candidates (dict): Dictionary containing algorithm candidates where
+                keys are algorithm names (str) and values are dictionaries containing
+                'description' and 'justification' keys.
+        Returns:
+            tuple: A tuple containing:
+                - str: Formatted string with all algorithm candidates joined by double newlines
+                - dict: Dictionary mapping algorithm names to their formatted string representations
+        Example:
+            >>> algo_candidates = {
+            ...     "PC": {
+            ...         "description": "Constraint-based algorithm",
+            ...         "justification": "Works well with independence tests"
+            ...     }
+            ... }
+            >>> result_str, mapping = self.algo_can2string(algo_candidates)
+        """
         algo_strings = []
         algo2des_cond_hyper = {}
         
