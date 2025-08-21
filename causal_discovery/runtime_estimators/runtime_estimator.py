@@ -7,6 +7,7 @@ from typing import Dict, List, Any
 from llm import LLMClient
 import scipy.special
 import requests
+from loguru import logger
 
 # Unified time complexity units
 # N: number of samples
@@ -162,10 +163,11 @@ class RuntimeEstimator:
         """Calculate feature values based on complexity terms."""
         # First calculate any derived parameters
         full_params = self._calculate_derived_params(params)
-        
+        logger.info(f'{full_params = }')
         features = {}
         for term in self.complexity_config['terms']:
             features[term['name']] = self._evaluate_expression(term['expression'], full_params)
+        logger.info(f'{features = }')
         return pd.Series(features)
     
     def _fit_model(self, df: pd.DataFrame):
