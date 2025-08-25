@@ -10,7 +10,6 @@ from utils.logger import logger
 class Reranker:
     def __init__(self, args):
         self.args = args
-        self.hp_selector = HyperparameterSelector(args)
         self.llm_client = LLMClient(args)
 
     def forward(self, global_state):
