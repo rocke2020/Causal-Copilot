@@ -11,6 +11,7 @@ class HyperparameterSelector:
         self.llm_client = LLMClient(args)
 
     def forward(self, global_state):
+        """ adds algorithm_arguments into global_state """
         selected_algo = global_state.algorithm.selected_algorithm
         hp_context = self.load_hp_context(selected_algo)
         try:

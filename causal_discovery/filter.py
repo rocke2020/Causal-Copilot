@@ -13,6 +13,7 @@ class Filter(object):
         self.llm_client = LLMClient(args)
 
     def forward(self, global_state: GlobalState):
+        """ adds algorithm_candidates into global_state """
         if global_state.algorithm.selected_algorithm is not None:
             logger.detail(f"User has already selected the algorithm: {global_state.algorithm.selected_algorithm}, skip the filtering process.")
             global_state.algorithm.algorithm_candidates = {

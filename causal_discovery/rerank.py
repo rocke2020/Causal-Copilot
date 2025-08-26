@@ -13,6 +13,7 @@ class Reranker:
         self.llm_client = LLMClient(args)
 
     def forward(self, global_state):
+        """ adds selected_algorithm into global_state """
         algo_candidates = self.filter_algo_candidates(global_state)
         algo_info, algo2des_cond_hyper = self.algo_can2string(algo_candidates)
 
