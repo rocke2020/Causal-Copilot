@@ -1,3 +1,12 @@
-# 
-python main.py --data-file data/dataset/Abalone/Abalone.csv --initial_query "Do causal discovery on this dataset" \
-    2>&1 | tee app/runs/quick_run.sh.log
+#!/bin/bash
+
+# Check if first argument is "nohup" to run in background
+if [ "$1" = "nohup" ]; then
+    echo "Running with nohup in background..."
+    nohup python main.py --data-file data/dataset/Abalone/Abalone.csv --initial_query "Do causal discovery on this dataset" > app/runs/quick_run.sh-nohup.log 2>&1 &
+    echo "Process started in background. Check app/runs/quick_run.sh-nohup.log for output."
+    echo "PID: $!"
+else
+    echo "Running directly with python..."
+    python main.py --data-file data/dataset/Abalone/Abalone.csv --initial_query "Do causal discovery on this dataset" 2>&1 | tee app/runs/quick_run.sh.log
+fi
