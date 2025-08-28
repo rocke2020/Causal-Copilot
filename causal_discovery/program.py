@@ -13,6 +13,7 @@ class Programming(object):
         self.args = args
 
     def forward(self, global_state):
+        """handle_correlated_features默认开启；时序模型，如果有lag_matrix，额外处理"""
         # Check if we should automatically find and handle correlated features
         correlation_threshold = getattr(global_state.algorithm, "correlation_threshold")
         logger.info(
