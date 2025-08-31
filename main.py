@@ -448,7 +448,7 @@ def main(args):
         logger.error(f"Report generation failed: {str(e)}")
         raise
     ################################
-
+    return report, global_state
     # User discussion part
     from user.discuss import Discussion
 

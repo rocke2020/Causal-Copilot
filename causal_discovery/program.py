@@ -6,15 +6,33 @@ from causal_discovery.wrappers.utils.tab_utils import (
     restore_original_node_indices,
 )
 from utils.logger import logger
+from pathlib import Path
+from pandas import DataFrame
 
 
 class Programming(object):
-    def __init__(self, args):
+    def __init__(self, args, enable_save_data=1):
         self.args = args
+        self.enable_save_data = enable_save_data
+        self.data_file = Path(args.data_file)
+
+    def save_data(self, global_state, processed_data: DataFrame):
+        if not self.enable_save_data:
+            return
+        out_dir = Path(f"output/{global_state.algorithm.selected_algorithm}")
+        out_dir.mkdir(parents=True, exist_ok=True)
+        algorithm_arguments_file = out_dir / "algorithm_arguments.json"
+        arguments = global_state.algorithm.algorithm_arguments
+        with open(algorithm_arguments_file, "w", encoding="utf-8") as f:
+            json.dump(arguments, f, ensure_ascii=False, indent=4)
+        data_file = out_dir / f"processed_{self.data_file.stem}.csv"
+        with open(data_file, "w", encoding="utf-8") as f:
+            processed_data.to_csv(f, index=False)
 
     def forward(self, global_state):
         """handle_correlated_features默认开启；时序模型，如果有lag_matrix，额外处理"""
         # Check if we should automatically find and handle correlated features
+        logger.info(f"{global_state.algorithm.selected_algorithm = }")
         correlation_threshold = getattr(global_state.algorithm, "correlation_threshold")
         logger.info(
             f"Checking for correlated features with threshold {global_state.algorithm.handle_correlated_features = }, {correlation_threshold = }"
@@ -22,6 +40,7 @@ class Programming(object):
         if global_state.algorithm.handle_correlated_features:
             threshold = getattr(global_state.algorithm, "correlation_threshold", 0.99)
             # Automatically find and remove highly correlated features
+            # processed_data is DataFrame
             reduced_data, adjusted_mapping, original_indices = (
                 remove_highly_correlated_features(
                     global_state.user_data.processed_data, threshold=threshold
@@ -29,8 +48,15 @@ class Programming(object):
             )
 
             # Only proceed with reduced dataset if we found correlated features
+            orig_data_shape = global_state.user_data.processed_data.shape
+            logger.info(
+                f"{orig_data_shape = }, {reduced_data.shape = }, {original_indices = }"
+            )
+            # 初步应用，人工选择的特征，大概率相关性较低不会被移除。
             if len(original_indices) < global_state.user_data.processed_data.shape[1]:
                 # Run algorithm on reduced dataset
+                logger.info("Running algorithm on reduced dataset...")
+                self.save_data(global_state, reduced_data)
                 algo_func = getattr(wrappers, global_state.algorithm.selected_algorithm)
                 graph, info, raw_result = algo_func(
                     global_state.algorithm.algorithm_arguments
@@ -58,7 +84,9 @@ class Programming(object):
                 info["high_corr_features_removed"] = original_indices
             else:
                 # No correlated features found, run algorithm on the full dataset
+                logger.info("No correlated features found, running on full dataset...")
                 algo_func = getattr(wrappers, global_state.algorithm.selected_algorithm)
+                self.save_data(global_state, global_state.user_data.processed_data)
                 graph, info, raw_result = algo_func(
                     global_state.algorithm.algorithm_arguments
                 ).fit(global_state.user_data.processed_data)
@@ -67,7 +95,9 @@ class Programming(object):
                 global_state.results.converted_graph = graph
         else:
             # Run algorithm on the full dataset
+            logger.info("No correlated features found, running on full dataset...")
             algo_func = getattr(wrappers, global_state.algorithm.selected_algorithm)
+            self.save_data(global_state, global_state.user_data.processed_data)
             graph, info, raw_result = algo_func(
                 global_state.algorithm.algorithm_arguments
             ).fit(global_state.user_data.processed_data)
