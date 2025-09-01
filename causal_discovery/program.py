@@ -101,7 +101,9 @@ class Programming(object):
             graph, info, raw_result = algo_func(
                 global_state.algorithm.algorithm_arguments
             ).fit(global_state.user_data.processed_data)
-
+            logger.info(
+                f"{type(graph) = }, {type(raw_result[0]) = }, {type(raw_result[1]) = }"
+            )
             global_state.results.raw_result = raw_result
             global_state.results.converted_graph = graph
 
