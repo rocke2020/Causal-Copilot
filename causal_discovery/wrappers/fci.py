@@ -1,12 +1,12 @@
 import numpy as np
 import pandas as pd
 from typing import Dict, List, Tuple
+from loguru import logger
 
 # use the local causal-learn package
 import sys
 
 # use the local causal-learn package
-import sys
 import os
 root_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 causal_learn_dir = os.path.join(root_dir, 'externals', 'causal-learn')
@@ -136,6 +136,7 @@ class FCI(CausalDiscoveryAlgorithm):
     def convert_to_adjacency_matrix(self, adj_matrix: CausalGraph) -> np.ndarray:
         adj_matrix = adj_matrix.graph
         inferred_flat = np.zeros_like(adj_matrix)
+        logger.info(f'{inferred_flat.shape = }')
         indices = np.where(adj_matrix == 1)
         for i, j in zip(indices[0], indices[1]):
             if adj_matrix[j, i] == -1:

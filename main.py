@@ -1,6 +1,6 @@
 # Suppress external library logs first
 import utils.suppress_logs
-
+import time
 # Import logger after suppressing external logs
 from utils.logger import logger, set_log_level, LogLevel
 
@@ -18,13 +18,13 @@ from postprocess.visualization import Visualization, convert_to_edges
 from preprocess.eda_generation import EDA
 from report.report_generation import Report_generation
 from global_setting.Initialize_state import global_state_initialization, load_data
-
 import os
 import json
 import argparse
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
+
 
 load_dotenv()
 set_log_level(LogLevel.DEBUG)
@@ -260,6 +260,7 @@ def main(args):
 
     logger.step(7, 8, "Algorithm Execution")
     logger.detail(f"Running {global_state.algorithm.selected_algorithm} algorithm...")
+    start_programmer_time = time.perf_counter()
     try:
         programmer = Programming(args)
         global_state = programmer.forward(global_state)
@@ -280,7 +281,10 @@ def main(args):
     except Exception as e:
         logger.error(f"Algorithm execution failed: {str(e)}")
         raise
-
+    end_programmer_time = time.perf_counter()
+    logger.detail(
+        f"Algorithm execution time: {end_programmer_time - start_programmer_time:.2f} seconds"
+    )
     #############Visualization for Initial Graph###################
     my_visual_initial = Visualization(global_state)
     if (

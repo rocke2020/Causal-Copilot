@@ -1,15 +1,12 @@
-import numpy as np
-from sympy.stats.rv import probability
-import ast
-import json 
-from llm import LLMClient
-from utils.logger import logger
-from postprocess.visualization import Visualization
 from collections import Counter
+from datetime import datetime
+
 import networkx as nx
+import numpy as np
+from loguru import logger
 from pydantic import BaseModel
-import networkx as nx
-from pydantic import BaseModel
+
+from llm import LLMClient
 
 
 def bootstrap_iteration(data, ts, algorithm, hyperparameters):
@@ -20,9 +17,11 @@ def bootstrap_iteration(data, ts, algorithm, hyperparameters):
     :param hyperparameters: Dictionary of hyperparameter names and values
     :return: Bootstrap result of one iteration
     '''
-    import random
     import math
+    import random
+
     import pandas as pd
+
     import causal_discovery.wrappers as wrappers
 
     n = data.shape[0]
@@ -134,7 +133,6 @@ def bootstrap(data, full_graph, algorithm, hyperparameters, boot_num, ts, parall
 
         # pool.close()
         # pool.join()
-        from utils.logger import logger
         logger.process("Running parallel bootstrap analysis")
         boot_effect_save = Parallel(n_jobs=4)(
                 delayed(bootstrap_iteration)(data, ts, algorithm, hyperparameters)
@@ -390,7 +388,7 @@ def llm_evaluation_new(data, args, edges_dict, boot_edges_prob, bootstrap_check_
         else: 
             relationship = ''
 
-        task = f"Firstly, determine the causal relationship between\n"
+        task = "Firstly, determine the causal relationship between\n"
         for node_i, node_j in related_pairs:
             task += f" {node_i} and {node_j},"
        
@@ -576,6 +574,7 @@ def check_cycle(args, data, graph):
             prompt = " -> ".join(f"{n}" for n in cycle)
             prompt +=  f" -> {cycle[0]}"
             logger.debug(f"Cycle prompt: {prompt[:100]}...", "LLM")
+            # TODO 补充业务背景
             remove_nodes = LLM_remove_cycles(args, prompt)
             logger.debug(f"Remove nodes: {remove_nodes}", "CycleRemoval")
             ind_i = columns.str.lower().get_loc(remove_nodes[0].lower())
