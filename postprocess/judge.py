@@ -124,7 +124,7 @@ class Judge(object):
             revised_graph[idx_i, idx_j] = revised_graph[idx_j, idx_i] = 0
         
         ########### Check Cycles ##########
-        revised_graph = check_cycle(self.args, data, revised_graph)
+        revised_graph = check_cycle(self.args, data, revised_graph, knowledge_docs)
 
         return {}, bootstrap_check_dict, boot_probability, llm_pruning_record, revised_graph, bk
 
@@ -274,7 +274,3 @@ The results of falsify_graph show the output of two tests. The first measures wh
         f1 = 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0
 
         return {'shd': shd, 'precision': precision, 'recall': recall, 'f1': f1}
-
-
-
-

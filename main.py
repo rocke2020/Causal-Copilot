@@ -204,6 +204,7 @@ def main(args):
         logger.detail("Analyzing dataset characteristics...")
         global_state = stat_info_collection(global_state)
         logger.detail("Collecting domain knowledge...")
+        
         global_state = knowledge_info(args, global_state)
 
     # Convert statistics to text
@@ -283,7 +284,7 @@ def main(args):
         raise
     end_programmer_time = time.perf_counter()
     logger.detail(
-        f"Algorithm execution time: {end_programmer_time - start_programmer_time:.2f} seconds"
+        f"*** Algorithm execution time: {end_programmer_time - start_programmer_time:.2f} seconds ***"
     )
     #############Visualization for Initial Graph###################
     my_visual_initial = Visualization(global_state)

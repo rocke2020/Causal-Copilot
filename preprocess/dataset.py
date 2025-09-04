@@ -81,7 +81,7 @@
 
 
 def knowledge_info(args, global_state):
-    '''
+    '''TODO use user input knowledge docs if provided, otherwise use LLM to generate knowledge docs.
     :param args: configurations
     :param global_state: GlobalState
     :return: GlobalState
@@ -124,7 +124,7 @@ def knowledge_info(args, global_state):
         json_response=False
     )
     response_doc = response
-    logger.detail(f"{str(response_doc)[:200] = }")
+    logger.detail(f"knowledge_doc\n{str(response_doc)[:400] = }\n{str(response_doc)[-400:] = }")
     knowledge_docs = [response_doc]
     global_state.user_data.knowledge_docs = knowledge_docs
     
