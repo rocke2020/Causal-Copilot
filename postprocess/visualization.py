@@ -80,6 +80,7 @@ class Visualization(object):
         self.data = global_state.user_data.processed_data[intersection_features]
         self.data_idx = [global_state.user_data.processed_data.columns.get_loc(var) for var in intersection_features]
         self.bootstrap_prob = global_state.results.bootstrap_probability
+        logger.info(f'{self.data_idx = }, {self.bootstrap_prob = }')
         self.save_dir = global_state.user_data.output_graph_dir
         self.threshold = threshold
 

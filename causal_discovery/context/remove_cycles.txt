@@ -1,14 +1,14 @@
 Relative knowledge
 {KNOWLEDGE_DOCS}
 
-The original analysed causal discovery graph contains a cycle: 
+The original analysed causal discovery graph (that's relationships) form a cycle:
 {CYCLE}
 
-Please choose an egde to remove this cycle, and save nodes of this edge in a list.
+Please choose an egde to remove this cycle, and output nodes of this edge in a list.
 
-Please provide your suggestions in a structured JSON format, with detailed explanation. Your response should look like this:
+Please provide your suggestions in a structured JSON format, with brief explanation. Your response should look like this:
 
 {
   "nodes": ["node_x", "node_y"],
-  "explanation": "BRIEF_EXPLANATION_OF_TRADEOFFS"
+  "explanation": "BRIEF_EXPLANATION"
 }

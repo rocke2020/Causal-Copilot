@@ -677,13 +677,13 @@ def LLM_remove_cycles(args, message):
 
     class VarList(BaseModel):
         nodes: list[str]
-
+    logger.info(f'LLM_remove_cycles message\n{message}')
     response = client.chat_completion(
         prompt=message,
-        system_prompt="You are a helpful assistant, the following relationships form a cycle, please choose an egde to remove this cycle, and save nodes of this edge in a list.",
+        system_prompt="You are a helpful assistant.",
         json_response=True,
     )
-
+    logger.info(f'LLM_remove_cycles response\n{response}')
     return response["nodes"]
 
 
@@ -708,7 +708,7 @@ def check_cycle(args, data, graph, knowledge_docs):
     if acyclic:
         logger.success("Graph is acyclic (no cycles detected)")
     else:
-        logger.info(f"{type(knowledge_docs) = }, {str(knowledge_docs)[:200] = }")
+        logger.info(f"{str(knowledge_docs)[:200] = }")
         knowledge_doc = (
             "\n".join(knowledge_docs)
             if isinstance(knowledge_docs, list)
@@ -721,7 +721,7 @@ def check_cycle(args, data, graph, knowledge_docs):
             cycle_prompt = " -> ".join(f"{n}" for n in cycle)
             cycle_prompt += f" -> {cycle[0]}"
             logger.debug(f"Remove Cycle prompt:\n{cycle_prompt}", "LLM")
-            prompt = context.format(cycle=cycle_prompt, KNOWLEDGE_DOCS=knowledge_doc)
+            prompt = context.format(CYCLE=cycle_prompt, KNOWLEDGE_DOCS=knowledge_doc)
             remove_nodes = LLM_remove_cycles(args, prompt)
             logger.debug(f"Remove nodes: {remove_nodes}", "CycleRemoval")
             ind_i = columns.str.lower().get_loc(remove_nodes[0].lower())
