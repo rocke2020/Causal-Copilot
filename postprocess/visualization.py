@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
 import os
+import json
 import pandas as pd
 from tigramite.plotting import plot_time_series_graph
 
@@ -80,7 +81,9 @@ class Visualization(object):
         self.data = global_state.user_data.processed_data[intersection_features]
         self.data_idx = [global_state.user_data.processed_data.columns.get_loc(var) for var in intersection_features]
         self.bootstrap_prob = global_state.results.bootstrap_probability
-        logger.info(f'{self.data_idx = }, {self.bootstrap_prob = }')
+        columns = global_state.user_data.processed_data.columns.tolist()
+        logger.info(f'{global_state.user_data.visual_selected_features = }')
+        logger.info(f'{self.data_idx = }, {intersection_features = }, {columns = }, {self.bootstrap_prob = }')
         self.save_dir = global_state.user_data.output_graph_dir
         self.threshold = threshold
 
@@ -104,6 +107,10 @@ class Visualization(object):
         data_labels = [self.global_state.user_data.processed_data.columns[i].replace('_', ' ') for i in data_idx]
         mat = mat[data_idx, :][:, data_idx]
         edges_dict = convert_to_edges(algo, data_labels, mat)
+        logger.debug(f'{edges_dict = }')
+        out_file = os.path.split(path)[-1] + '.json'
+        with open(os.path.join(self.save_dir, out_file), "w", encoding="utf-8") as f:
+            json.dump(edges_dict, f, ensure_ascii=False, indent=4)
         logger.debug(f"Edges dictionary: {len(edges_dict)} entries", "Visualization")
         pag = PAG_custom()
         for edge in edges_dict['certain_edges']:
@@ -213,6 +220,8 @@ class Visualization(object):
                 # Create a heatmap
                 plt.figure(figsize=(8, 6))
                 #plt.rcParams['font.family'] = 'Times New Roman'
+                _prob_mat = prob_mat[self.data_idx, :][:, self.data_idx]
+                logger.debug(f'{key = }, _prob_mat\n{_prob_mat}')
                 sns.heatmap(prob_mat[self.data_idx, :][:, self.data_idx], annot=True, cmap='Reds', fmt=".2f", square=True, cbar_kws={"shrink": .8},
                             xticklabels=self.global_state.user_data.visual_selected_features,
                             yticklabels=self.global_state.user_data.visual_selected_features)            
@@ -367,13 +376,19 @@ def convert_to_edges(algo, variables, mat):
         mat: The causal matrix.
 
     Logic:
-        certain_edges: 1 (->), a -> b, a causes b.
-        uncertain_edges: 2 (-), a -o b, a has undirected relationship with b.
-        bi_edges: 3 (<->), a <-> b, a and b have bidirected relationship, a has hidden confounder with b.
-        half_certain_edges: 4 (o->), a o-> b, a causes b, o-> Indicates there's a confounded relationship between j and i, meaning there's likely an unobserved common cause (confounder) affecting both variables.
-        half_uncertain_edges: 5 (o-),
-        none_edges: 6 (o-o), a o-o b, undirected
-        associated_edges: 7 (--), a -- b, a is associated with b
+        certain_edges: 1, a -> b
+            b causes a.
+        uncertain_edges: 2, a - b
+            a has undirected relationship with b.
+        bi_edges: 3, a <-> b
+            a and b have bidirected relationship, a has hidden confounder with b.
+        half_certain_edges: 4, a o-> b
+            a causes b, o-> Indicates there's a confounded relationship between j and i, meaning there's likely an unobserved common cause (confounder) affecting both variables.
+        half_uncertain_edges: 5, a o-
+        none_edges: 6, a o-o b
+            undirected
+        associated_edges: 7, a -- b
+            a is associated with b
     Returns:
         A dictionary containing different types of edges.
     """

@@ -72,17 +72,18 @@ def bootstrap_probability(boot_result, algorithm):
             if i == j:
                 continue
             else:
+                # elements_ij and elements_ji are 1d lists, length boot_result.shape[0]
                 elements_ij = boot_result[:, i, j]
                 elements_ji = boot_result[:, j, i]
-                logger.info(f"elements_ij\n{elements_ij}elements_ji\n{elements_ji}")
+                # logger.info(f"elements_ij\n{elements_ij}elements_ji\n{elements_ji}")
                 # i x j
                 none_exist_prob[i, j] = np.mean((elements_ij == 0) & (elements_ji == 0))
                 # j -> i
-                temp =  (elements_ij == 1) & (elements_ji == 0)
-                logger.info(f'bootstrap_probability j -> i\n{temp}')
+                temp = (elements_ij == 1) & (elements_ji == 0)
                 certain_edges_prob[i, j] = np.mean(
                     (elements_ij == 1) & (elements_ji == 0)
                 )
+                # logger.info(f"bootstrap prob j->i {certain_edges_prob[i, j]}\n{temp}")
                 # i - j
                 uncertain_edges_prob[i, j] = np.mean(
                     (elements_ij == 2) | (elements_ji == 2)
@@ -136,7 +137,7 @@ def bootstrap(
 
     # from multiprocessing import Pool
     from joblib import Parallel, delayed
-
+    logger.info(f'{list(data.columns) = } {full_graph = }')
     m = data.shape[1]
     errors = {}
     raw_graph = full_graph

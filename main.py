@@ -1,6 +1,8 @@
 # Suppress external library logs first
 import utils.suppress_logs
 import time
+from datetime import datetime
+import pickle
 # Import logger after suppressing external logs
 from utils.logger import logger, set_log_level, LogLevel
 
@@ -316,6 +318,14 @@ def main(args):
             _ = my_visual_initial.plot_pdag(
                 global_state.user_data.ground_truth, "true_graph.pdf", pos=pos_est
             )
+        logger.info(f"initial graph pos_est\n{list(pos_est.keys())}\n{pos_est}")
+        try:
+            with open('test/pos_est.json', 'w', encoding="utf-8") as f:
+                json.dump(pos_est, f, ensure_ascii=False, indent=4)
+        except Exception as e:
+            logger.error(f"Saving pos_est json failed: {str(e)}")
+            with open('test/pos_est.dat', 'wb') as f:
+                pickle.dump(pos_est, f)
         # Plot Initial Graph
         _ = my_visual_initial.plot_pdag(
             global_state.results.converted_graph,
@@ -350,7 +360,7 @@ def main(args):
         logger.success("Graph refinement completed")
     end_refinement_time = time.perf_counter()
     logger.detail(
-        f"*** Algorithm execution time: {end_refinement_time - end_programmer_time:.2f} seconds ***"
+        f"*** refinement execution time: {end_refinement_time - end_programmer_time:.2f} seconds ***"
     )
     #############Visualization for Revised Graph###################
     logger.section("Graph Visualization")
@@ -473,3 +483,4 @@ def main(args):
 if __name__ == "__main__":
     args = parse_args()
     main(args)
+    logger.info(f'ends {datetime.now() = }')

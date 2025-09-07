@@ -139,10 +139,10 @@ class FCI(CausalDiscoveryAlgorithm):
         Complete FCI Edge Hierarchy:
         From most certain to least certain:
 
-        j -> i (directed edge) - clear causal direction
-        j <-> i (bidirectional) - mutual causation
-        j o-> i (partially directed) - confounded relationship
-        j o-o i (undirected) - maximum uncertainty
+        [i, j] = 1, j -> i (directed edge) - clear causal direction
+        [i, j] = 3, j <-> i (bidirectional) - mutual causation
+        [i, j] = 4, j o-> i (partially directed) - confounded relationship
+        [i, j] = 6, j o-o i (undirected) - maximum uncertainty
 
         Args: adj_matrix
                [[ 0  0  1  0  0  1  1  0]

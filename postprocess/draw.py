@@ -1,4 +1,6 @@
 from typing import List, Optional, Tuple
+from loguru import logger
+
 import networkx as nx
 import numpy as np
 def _draw_pag_edges(
@@ -163,7 +165,7 @@ def draw(
         bidirected_edges = G.bidirected_edges
     if hasattr(G, "associated_edges"):
         associated_edges = G.associated_edges
-
+    logger.info(f'{circle_edges = }, {directed_edges = }, {undirected_edges = }, {bidirected_edges = }, {associated_edges = }')
     # draw PAG edges and keep track of the circular endpoints found
     dot, found_circle_sibs = _draw_pag_edges(
         dot,

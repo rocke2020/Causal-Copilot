@@ -59,7 +59,7 @@ class Judge(object):
         edge_recom, boot_probability = bootstrap(data=data, full_graph=full_graph, algorithm=algorithm, hyperparameters=hyperparameters,
                                                   boot_num=boot_num, ts=False, parallel=self.args.parallel)
         #print("Edge Recommendations from Bootstrap method: ", edge_recom)
-        #print("Bootstrap Probability: ", boot_probability)
+        logger.info(f'boot_probability\n{boot_probability}')
 
         from causallearn.utils.PCUtils.BackgroundKnowledge import BackgroundKnowledge
         bk = BackgroundKnowledge()
