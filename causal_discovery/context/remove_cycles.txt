@@ -8,7 +8,7 @@ Please choose an egde to remove this cycle, and output nodes of this edge in a l
 
 Please provide your suggestions in a structured JSON format, with brief explanation. Your response should look like this:
 
-{
+{{
   "nodes": ["node_x", "node_y"],
   "explanation": "BRIEF_EXPLANATION"
-}
+}}

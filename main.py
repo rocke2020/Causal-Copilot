@@ -348,7 +348,10 @@ def main(args):
         logger.detail("Applying bootstrap sampling and statistical tests")
         global_state = judge.forward(global_state, "cot_all_relation", 1)
         logger.success("Graph refinement completed")
-
+    end_refinement_time = time.perf_counter()
+    logger.detail(
+        f"*** Algorithm execution time: {end_refinement_time - end_programmer_time:.2f} seconds ***"
+    )
     #############Visualization for Revised Graph###################
     logger.section("Graph Visualization")
     logger.detail("Generating visualization for revised graph and confidence heatmaps")
@@ -391,6 +394,7 @@ def main(args):
         code, results = programmer.forward(preprocessed_data, algorithm, hyper_suggest)
         flag, algorithm_setup = judge(preprocessed_data, code, results, statistics_dict, algorithm_setup, knowledge_docs)
     """
+
     logger.step(8, 8, "Report Generation")
     #############Report Generation###################
     try_num = 1

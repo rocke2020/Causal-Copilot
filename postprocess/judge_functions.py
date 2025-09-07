@@ -7,6 +7,7 @@ from utils.logger import logger
 from pydantic import BaseModel
 
 from llm import LLMClient
+from utils.retry_utils import retry
 
 
 def bootstrap_iteration(data, ts, algorithm, hyperparameters):
@@ -55,6 +56,7 @@ def bootstrap_iteration(data, ts, algorithm, hyperparameters):
 
 
 def bootstrap_probability(boot_result, algorithm):
+    logger.info(f"bootstrap_probability {boot_result.shape = }")
     m = boot_result.shape[1]
 
     certain_edges_prob = np.zeros((m, m))  # -> and use converted graph
@@ -72,10 +74,12 @@ def bootstrap_probability(boot_result, algorithm):
             else:
                 elements_ij = boot_result[:, i, j]
                 elements_ji = boot_result[:, j, i]
-
+                logger.info(f"elements_ij\n{elements_ij}elements_ji\n{elements_ji}")
                 # i x j
                 none_exist_prob[i, j] = np.mean((elements_ij == 0) & (elements_ji == 0))
                 # j -> i
+                temp =  (elements_ij == 1) & (elements_ji == 0)
+                logger.info(f'bootstrap_probability j -> i\n{temp}')
                 certain_edges_prob[i, j] = np.mean(
                     (elements_ij == 1) & (elements_ji == 0)
                 )
@@ -672,19 +676,19 @@ def edges_to_relationship(data, edges_dict, boot_edges_prob=None):
     return filtered_result_dict, relation_text
 
 
+@retry(max_retries=1, delay_seconds=1)
 def LLM_remove_cycles(args, message):
     client = LLMClient(args)
 
-    class VarList(BaseModel):
-        nodes: list[str]
-    logger.info(f'LLM_remove_cycles message\n{message}')
+    logger.info(f"LLM_remove_cycles message\n{message}")
     response = client.chat_completion(
         prompt=message,
         system_prompt="You are a helpful assistant.",
         json_response=True,
     )
-    logger.info(f'LLM_remove_cycles response\n{response}')
-    return response["nodes"]
+    logger.info(f"LLM_remove_cycles response\n{response}")
+    removed_nodes = response["nodes"]
+    return removed_nodes
 
 
 def check_cycle(args, data, graph, knowledge_docs):
@@ -716,12 +720,14 @@ def check_cycle(args, data, graph, knowledge_docs):
         )
         logger.warning("Graph contains cycles")
         cycles = list(nx.simple_cycles(G))
-        logger.debug(f"Found {len(cycles)} cycles", "CycleCheck")
+        logger.debug(f"Found {len(cycles)} {cycles}", "CycleCheck")
         for cycle in cycles:
             cycle_prompt = " -> ".join(f"{n}" for n in cycle)
             cycle_prompt += f" -> {cycle[0]}"
             logger.debug(f"Remove Cycle prompt:\n{cycle_prompt}", "LLM")
             prompt = context.format(CYCLE=cycle_prompt, KNOWLEDGE_DOCS=knowledge_doc)
+            with open("test/remove_cycles.txt", "w", encoding="utf-8") as f:
+                f.write(prompt)
             remove_nodes = LLM_remove_cycles(args, prompt)
             logger.debug(f"Remove nodes: {remove_nodes}", "CycleRemoval")
             ind_i = columns.str.lower().get_loc(remove_nodes[0].lower())

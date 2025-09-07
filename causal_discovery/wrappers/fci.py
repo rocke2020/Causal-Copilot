@@ -134,15 +134,36 @@ class FCI(CausalDiscoveryAlgorithm):
         return adj_matrix, info, (graph, edges)
 
     def convert_to_adjacency_matrix(self, adj_matrix: CausalGraph) -> np.ndarray:
+        """
+        
+        Complete FCI Edge Hierarchy:
+        From most certain to least certain:
+
+        j -> i (directed edge) - clear causal direction
+        j <-> i (bidirectional) - mutual causation
+        j o-> i (partially directed) - confounded relationship
+        j o-o i (undirected) - maximum uncertainty
+
+        Args: adj_matrix
+               [[ 0  0  1  0  0  1  1  0]
+                [ 0  1  0  0  1  0  0 -1]
+                [ 0  0  0  0  0  0  0  2]
+                [ 0  0 -1  0  0  1 -1  1]
+                [ 1  1  0  0  1  0  0  0]
+                [ 0  1  0  0  1  0  0  1]
+                [ 0  0  1  1  1  0  1  0]]
+        """
         adj_matrix = adj_matrix.graph
         inferred_flat = np.zeros_like(adj_matrix)
-        logger.info(f'{inferred_flat.shape = }')
+        # logger.info(f'adj_matrix\n{adj_matrix}\n{inferred_flat.shape = }')
         indices = np.where(adj_matrix == 1)
         for i, j in zip(indices[0], indices[1]):
             if adj_matrix[j, i] == -1:
                 # directed edge: j -> i
                 inferred_flat[i, j] = 1
             elif adj_matrix[j, i] == 2:
+                # half_certain_edges
+                # o-> Indicates there's a confounded relationship between j and i, meaning there's likely an unobserved common cause (confounder) affecting both variables
                 # bidirected edge: j o-> i
                 inferred_flat[i, j] = 4
             elif adj_matrix[j, i] == 1:
@@ -154,10 +175,12 @@ class FCI(CausalDiscoveryAlgorithm):
         indices = np.where(adj_matrix == 2)
         for i, j in zip(indices[0], indices[1]):
             if adj_matrix[j, i] == 2:
+                # maximum uncertainty
                 # undirected edge: j o-o i
                 if inferred_flat[j, i] == 0:
                     inferred_flat[i, j] = 6
         return inferred_flat
+
     def test_algorithm(self):
         # Fix all random seeds for reproducibility
         np.random.seed(42)

@@ -358,15 +358,34 @@ class Visualization(object):
 
 
 def convert_to_edges(algo, variables, mat):
+    """
+    Convert a causal matrix to a list of edges.
+
+    Args:
+        algo: The causal discovery algorithm used.
+        variables: The list of variable names.
+        mat: The causal matrix.
+
+    Logic:
+        certain_edges: 1 (->), a -> b, a causes b.
+        uncertain_edges: 2 (-), a -o b, a has undirected relationship with b.
+        bi_edges: 3 (<->), a <-> b, a and b have bidirected relationship, a has hidden confounder with b.
+        half_certain_edges: 4 (o->), a o-> b, a causes b, o-> Indicates there's a confounded relationship between j and i, meaning there's likely an unobserved common cause (confounder) affecting both variables.
+        half_uncertain_edges: 5 (o-),
+        none_edges: 6 (o-o), a o-o b, undirected
+        associated_edges: 7 (--), a -- b, a is associated with b
+    Returns:
+        A dictionary containing different types of edges.
+    """
     labels = {i: variables[i] for i in range(len(variables))}
 
-    certain_edges = [] # ->
-    uncertain_edges = []  # -
-    bi_edges = []    #<->
-    half_certain_edges = []  # o->
-    half_uncertain_edges = []  # o-
-    none_edges = []  # o-o
-    associated_edges = []  # --
+    certain_edges = []
+    uncertain_edges = []
+    bi_edges = []
+    half_certain_edges = []
+    half_uncertain_edges = []
+    none_edges = []
+    associated_edges = []
     for ind_i in range(mat.shape[0]):
         for ind_j in range(mat.shape[0]):
             if ind_i == ind_j: continue
