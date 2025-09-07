@@ -136,7 +136,13 @@ esac
 
 echo ""
 echo "🎮 Checking GPU availability..."
-GPU_AVAILABLE=$(check_gpu && echo "true" || echo "false")
+check_gpu
+if [ $? -eq 0 ]; then
+    GPU_AVAILABLE="true"
+else
+    GPU_AVAILABLE="false"
+fi
+echo "GPU available: $GPU_AVAILABLE"
 
 echo ""
 echo "🐍 Installing Python packages..."
