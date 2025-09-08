@@ -411,14 +411,15 @@ def main(args):
 
     logger.detail("Step 1/3: Analyzing causal relationships")
     try:
-        global_state.results.raw_edges = convert_to_edges(
-            global_state.algorithm.selected_algorithm,
-            global_state.user_data.processed_data.columns,
-            global_state.results.converted_graph,
-        )
-        global_state.logging.graph_conversion["initial_graph_analysis"] = (
-            my_report.graph_effect_prompts()
-        )
+        if global_state.results.raw_edges is None:
+            global_state.results.raw_edges = convert_to_edges(
+                global_state.algorithm.selected_algorithm,
+                global_state.user_data.processed_data.columns,
+                global_state.results.converted_graph,
+            )
+            global_state.logging.graph_conversion["initial_graph_analysis"] = (
+                my_report.graph_effect_prompts()
+            )
         analysis_clean = (
             global_state.logging.graph_conversion["initial_graph_analysis"]
             .replace('"', "")

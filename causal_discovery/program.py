@@ -87,6 +87,14 @@ class Programming(object):
                 logger.info("No correlated features found, running on full dataset...")
                 algo_func = getattr(wrappers, global_state.algorithm.selected_algorithm)
                 self.save_data(global_state, global_state.user_data.processed_data)
+
+                """graph, info, raw_result from algo_func
+                info = {
+                    'edges': edges,
+                    'graph': graph,
+                    }
+                adj_matrix, info, (graph, edges)
+                """
                 graph, info, raw_result = algo_func(
                     global_state.algorithm.algorithm_arguments
                 ).fit(global_state.user_data.processed_data)
