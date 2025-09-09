@@ -220,7 +220,7 @@ class Visualization(object):
                 plt.figure(figsize=(8, 6))
                 #plt.rcParams['font.family'] = 'Times New Roman'
                 _prob_mat = prob_mat[self.data_idx, :][:, self.data_idx]
-                logger.debug(f'{key = }, _prob_mat\n{_prob_mat}')
+                # logger.debug(f'{key = }, _prob_mat\n{_prob_mat}')
                 sns.heatmap(prob_mat[self.data_idx, :][:, self.data_idx], annot=True, cmap='Reds', fmt=".2f", square=True, cbar_kws={"shrink": .8},
                             xticklabels=self.global_state.user_data.visual_selected_features,
                             yticklabels=self.global_state.user_data.visual_selected_features)            

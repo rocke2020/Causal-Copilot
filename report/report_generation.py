@@ -18,7 +18,7 @@ from utils.logger import logger
 import glob
 import ast
 import json
-
+from functools import lru_cache
 
 def compile_tex_to_pdf_with_refs(tex_file, output_dir=None, clean=True):
     """
@@ -41,7 +41,7 @@ def compile_tex_to_pdf_with_refs(tex_file, output_dir=None, clean=True):
         try:
             # Build latexmk arguments
             args = [
-                "-pdf",  # Generate PDF output
+                "-pdfxe",  # Generate PDF output
                 "-interaction=nonstopmode",  # Don't stop for errors
                 "-halt-on-error",  # Stop on errors
                 "-f",
@@ -65,6 +65,7 @@ def compile_tex_to_pdf_with_refs(tex_file, output_dir=None, clean=True):
     except Exception as e:
         logger.error(f"Exception occurred: {str(e)}")
         return False
+
 
 
 class Report_generation(object):
@@ -567,7 +568,7 @@ The following figure presents distributions of various variables. The orange das
 
     \begin{{figure}}[H]
         \centering
-        \includegraphics[width=0.5\textwidth]{{{self.visual_dir}/{self.algo}_initial_graph.pdf}}
+        \includegraphics[width=0.5\textwidth]{{{self.visual_dir}/{self.algo}_revised_graph.pdf}}
         \caption{{Causal Graph Discovered by the Algorithm. Solid lines represent causal edges identified by the algorithm, while dashed lines indicate strong correlations without inferred causality.}}
     \end{{figure}}
 
@@ -575,6 +576,7 @@ The following figure presents distributions of various variables. The orange das
             """
         return graph_response
 
+    @lru_cache(maxsize=256)
     def graph_effect_prompts(self, is_initial=True):
         """
         Prompts for Initial Graph Analysis integrated with background knowledge
@@ -920,23 +922,23 @@ Help me to write a comparison of the following causal discovery results of diffe
         relation_text_dict, relation_text = edges_to_relationship(
             self.data,
             self.global_state.results.revised_edges,
-            self.bootstrap_probability,
         )
         prompt = f"""为因果发现报告撰写中文的摘要。总结数据集、方法和关键发现，用5-6句话完成。
 请参考如下信息：
 Title: {self.title}
-Introduction: {self.knowledge_docs}
+Background Knowledge: {self.knowledge_docs}
 
 Data Columns: {", ".join(self.data.columns.tolist())}
+
 Statistics Description: {self.statistics_desc}
+
 Correlation Analysis: {self.eda_result["corr_analysis"]}
-Columns Relation: {relation_text}
 
 Selected Algorithm: {self.algo}
-Raw Edges {self.global_state.results.raw_edges}
-Graph results: {self.graph_effect_prompts(is_initial=True)}
-Revised Edges: {self.global_state.results.revised_edges}
-Graph results: {self.graph_effect_prompts(is_initial=False)}
+
+Revised edges relationships: {relation_text}
+
+Revised Graph results: {self.graph_effect_prompts(is_initial=True)}
 
 请编写中文摘要，回答中只包含摘要文本。不要包含任何标题或额外格式。
 """
@@ -1082,7 +1084,7 @@ Graph results: {self.graph_effect_prompts(is_initial=False)}
         )
 
         # Causal Inference info
-        logger.info(f"{self.inference_global_state = }")
+        # logger.info(f"{self.inference_global_state = }")
         logger.info(f"{self.inference_global_state.inference.task_index = }")
         if self.inference_global_state.inference.task_index != -1:
             logger.debug(

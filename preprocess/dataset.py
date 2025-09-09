@@ -124,7 +124,7 @@ def knowledge_info(args, global_state):
         json_response=False
     )
     response_doc = response
-    logger.detail(f"knowledge_doc\n{str(response_doc)[:400] = }\n{str(response_doc)[-400:] = }")
+    logger.detail(f"knowledge_doc\n{response_doc}")
     knowledge_docs = [response_doc]
     global_state.user_data.knowledge_docs = knowledge_docs
     
@@ -142,7 +142,7 @@ def knowledge_info(args, global_state):
         json_response=False
     )
     knowledge_doc_for_user = response2
-    logger.detail(f"Knowledge docs for user: {knowledge_doc_for_user}")
+    logger.detail(f"knowledge_doc_for_user: {knowledge_doc_for_user}")
     knowledge_docs_for_user = [knowledge_doc_for_user]
     global_state.user_data.knowledge_docs_for_user = knowledge_docs_for_user
 

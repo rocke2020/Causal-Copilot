@@ -3,6 +3,7 @@ import utils.suppress_logs
 import time
 from datetime import datetime
 import pickle
+
 # Import logger after suppressing external logs
 from utils.logger import logger, set_log_level, LogLevel
 
@@ -26,7 +27,7 @@ import argparse
 import numpy as np
 import pandas as pd
 from dotenv import load_dotenv
-
+from web_demo.help_functions import check_meaningful_feature_query
 
 load_dotenv()
 set_log_level(LogLevel.DEBUG)
@@ -174,7 +175,7 @@ def main(args):
 
     if args.data_mode == "real":
         global_state.user_data.raw_data = load_real_world_data(args.data_file)
-
+        check_meaningful_feature_query(global_state)
     logger.step(3, 8, "Processing user query")
     global_state.user_data.processed_data = process_user_query(
         args.initial_query, global_state.user_data.raw_data
@@ -206,7 +207,7 @@ def main(args):
         logger.detail("Analyzing dataset characteristics...")
         global_state = stat_info_collection(global_state)
         logger.detail("Collecting domain knowledge...")
-        
+
         global_state = knowledge_info(args, global_state)
 
     # Convert statistics to text
@@ -320,11 +321,11 @@ def main(args):
             )
         logger.info(f"initial graph pos_est\n{list(pos_est.keys())}\n{pos_est}")
         try:
-            with open('test/pos_est.json', 'w', encoding="utf-8") as f:
+            with open("test/pos_est.json", "w", encoding="utf-8") as f:
                 json.dump(pos_est, f, ensure_ascii=False, indent=4)
         except Exception as e:
             logger.error(f"Saving pos_est json failed: {str(e)}")
-            with open('test/pos_est.dat', 'wb') as f:
+            with open("test/pos_est.dat", "wb") as f:
                 pickle.dump(pos_est, f)
         # Plot Initial Graph
         _ = my_visual_initial.plot_pdag(
@@ -484,4 +485,4 @@ def main(args):
 if __name__ == "__main__":
     args = parse_args()
     main(args)
-    logger.info(f'ends {datetime.now() = }')
+    logger.info(f"ends {datetime.now() = }")

@@ -162,7 +162,7 @@ def global_state_initialization(args: argparse.Namespace = None) -> GlobalState:
     )
     info_extracted = response
 
-    logger.info(f"Info extracted: {info_extracted}", "Init")
+    logger.info(f"Info_extracted: {info_extracted}", "Init")
 
     # data management
     if args.demo_mode:
