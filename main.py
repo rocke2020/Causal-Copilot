@@ -483,6 +483,7 @@ def main(args):
 
 
 if __name__ == "__main__":
+    logger.info(f"starts {datetime.now().strftime('%Y-%m-%d %H:%M:%S') = }")
     args = parse_args()
     main(args)
-    logger.info(f"ends {datetime.now() = }")
+    logger.info(f"ends {datetime.now().strftime('%Y-%m-%d %H:%M:%S') = }")

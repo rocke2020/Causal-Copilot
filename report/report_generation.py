@@ -299,7 +299,7 @@ The output should be:
             relation=True,
         )
         relation_path = f"{self.visual_dir}/potential_relation.pdf"
-
+        logger.info(f'{sum(zero_matrix.flatten()) = }')
         if sum(zero_matrix.flatten()) != 0:
             relation_prompt = f"""
             {section2}
@@ -1053,6 +1053,7 @@ Graph results: {self.graph_effect_prompts(is_initial=False)}
         # Background info
         if self.data_mode == "real":
             self.background_info1, self.background_info2 = self.background_prompt()
+            logger.info(f'{self.background_info1 = }, {self.background_info2 = }')
         else:
             self.background_info1, self.background_info2 = "", ""
         # EDA info
@@ -1140,12 +1141,14 @@ Graph results: {self.graph_effect_prompts(is_initial=False)}
         replacement2 = {
             "[TITLE]": self.title or "",
             "[DATASET]": dataset_name or "",
-            "[POTENTIAL_GRAPH]": f"{self.visual_dir}/potential_relation.pdf",
             "[ALGO]": self.algo or "",
             "[RESULT_GRAPH0]": f"{self.visual_dir}/true_graph.pdf",
             "[RESULT_GRAPH3]": f"{self.visual_dir}/metrics.jpg",
             "[RESULT_GRAPH_COMPARISION]": self.result_comparison_graph_text,
         }
+        potential_relation_file = f"{self.visual_dir}/potential_relation.pdf"
+        if os.path.exists(potential_relation_file):
+            replacement2["[POTENTIAL_GRAPH]"] = potential_relation_file
 
         for placeholder, value in replacement1.items():
             prompt_template = prompt_template.replace(placeholder, value)

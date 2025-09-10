@@ -1,1 +1,0 @@
-latexmk -bibtex -interaction=nonstopmode -halt-on-error -pdfxe -f -outdir=output/Abalone.csv/20250909_112935/output_report/out output/Abalone.csv/20250909_112935/output_report/report.tex 
