@@ -1,7 +1,8 @@
 from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Union, Any
-import pandas as pd
+from typing import Dict, List, Optional
+
 import numpy as np
+import pandas as pd
 
 # Update logic and priority of the state initialization
 # 1. All values are intialized to None, later would be set its valid values by information exaction from the user query
@@ -30,6 +31,8 @@ class UserData:
     heterogeneity: Optional[str] = None
     accept_CPDAG: Optional[bool] = True
     initial_query_type: Optional[str] = None
+    data_file: Optional[str] = None
+    dataset_name: Optional[str] = None
 
 @dataclass
 class Statistics:
@@ -120,4 +123,3 @@ class GlobalState:
     algorithm: Algorithm = field(default_factory=Algorithm)
     inference: Inference = field(default_factory=Inference)
     results: Results = field(default_factory=Results)
-

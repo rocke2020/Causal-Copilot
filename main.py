@@ -46,6 +46,13 @@ def parse_args():
         default="data/dataset/Abalone/Abalone.csv",
         help="Path to the input dataset file (e.g., CSV format or directory location). If file, supports csv and json format.",
     )
+    # Input data file
+    parser.add_argument(
+        "--dataset_name",
+        type=str,
+        default="",
+        help="Name of the dataset (e.g., Abalone).",
+    )
 
     # Output file for results
     parser.add_argument(

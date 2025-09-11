@@ -172,9 +172,9 @@ def draw(
         bidirected_edges = G.bidirected_edges
     if hasattr(G, "associated_edges"):
         associated_edges = G.associated_edges
-    logger.info(
-        f"{circle_edges = }, {directed_edges = }, {undirected_edges = }, {bidirected_edges = }, {associated_edges = }"
-    )
+    # logger.info(
+    #     f"{circle_edges = }, {directed_edges = }, {undirected_edges = }, {bidirected_edges = }, {associated_edges = }"
+    # )
     # draw PAG edges and keep track of the circular endpoints found
     dot, found_circle_sibs = _draw_pag_edges(
         dot,
@@ -215,9 +215,10 @@ def draw(
         directed_G = G
 
     if full_node_names and isinstance(full_node_names, Iterable):
-        for node in full_node_names:
-            if node not in dot.body:
-                if True:
+        try:
+            for node in full_node_names:
+                # logger.debug(f"{dot.body = }")
+                if isinstance(dot.body, Iterable) and node not in dot.body:
                     dot.node(
                         str(node),
                         shape=shape,
@@ -233,45 +234,46 @@ def draw(
                     )
                     #  fontsize = str(24/len(str(node))))
 
-        # add any nodes from full_node_names that aren't in directed_G
-        for node in full_node_names:
-            if node not in directed_G:
-                if True:
+            # add any nodes from full_node_names that aren't in directed_G
+            for node in full_node_names:
+                if isinstance(directed_G, Iterable) and node not in directed_G:
                     directed_G.add_node(node)
+        except Exception as identifier:
+            logger.error(f"{identifier}")
 
         for v in full_node_names:
             child = str(v)
-            if pos and pos.get(v) is not None:
-                dot.node(
-                    child,
-                    shape=shape,
-                    height=node_height,
-                    width=node_width,
-                    penwidth=edge_penwidth,
-                    pos=f"{pos[v][0] * 10},{pos[v][1] * 10}!",
-                    fillcolor=fill_color,
-                    style="filled",
-                    color=arrow_color,
-                    font_color=arrow_color,
-                    fixedsize="true",
-                    fontsize=node_fontsize_base,
-                )
-            else:
-                dot.node(
-                    child,
-                    shape=shape,
-                    height=node_height,
-                    width=node_width,
-                    penwidth=edge_penwidth,
-                    fillcolor=fill_color,
-                    style="filled",
-                    color=arrow_color,
-                    font_color=arrow_color,
-                    fixedsize="true",
-                    fontsize=node_fontsize_base,
-                )
-
             try:
+                if pos and pos.get(v) is not None:
+                    dot.node(
+                        child,
+                        shape=shape,
+                        height=node_height,
+                        width=node_width,
+                        penwidth=edge_penwidth,
+                        pos=f"{pos[v][0] * 10},{pos[v][1] * 10}!",
+                        fillcolor=fill_color,
+                        style="filled",
+                        color=arrow_color,
+                        font_color=arrow_color,
+                        fixedsize="true",
+                        fontsize=node_fontsize_base,
+                    )
+                else:
+                    dot.node(
+                        child,
+                        shape=shape,
+                        height=node_height,
+                        width=node_width,
+                        penwidth=edge_penwidth,
+                        fillcolor=fill_color,
+                        style="filled",
+                        color=arrow_color,
+                        font_color=arrow_color,
+                        fixedsize="true",
+                        fontsize=node_fontsize_base,
+                    )
+
                 for parent in directed_G.predecessors(v):
                     if parent == v or not directed_G.has_edge(parent, v):
                         continue
@@ -299,8 +301,8 @@ def draw(
                             penwidth=edge_penwidth,
                             **attrs,
                         )
-            except nx.exception.NetworkXError as e:
+            except Exception as e:
                 # the node is completely independent in the inferred graph
-                pass
+                logger.error(f"{e}")
 
     return dot

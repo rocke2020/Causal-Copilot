@@ -1,18 +1,16 @@
-from dataclasses import dataclass, field
-from typing import List, Dict, Optional, Union, Any
 import argparse
-import pandas as pd
-import ast
-import numpy as np
-import os
 import json
-import torch
+import os
 from datetime import datetime
-from global_setting.state import GlobalState
+
+import numpy as np
+import pandas as pd
+import torch
+
 from data.simulator.simulation import SimulationManager
+from global_setting.state import GlobalState
 from llm import LLMClient
 from utils.logger import logger
-
 
 
 def load_data(global_state: GlobalState, args: argparse.Namespace):
@@ -23,7 +21,7 @@ def load_data(global_state: GlobalState, args: argparse.Namespace):
         if args.data_mode in ["simulated", "real"]:
             if os.path.isdir(args.data_file):
                 config, data, graph = load_local_data(args.data_file)
-            else: 
+            else:
                 data = pd.read_csv(args.data_file)
                 config, graph = None, None
         # elif args.data_mode == "real":
@@ -32,31 +30,31 @@ def load_data(global_state: GlobalState, args: argparse.Namespace):
         else:
             raise ValueError("Invalid data mode. Please choose 'real' or 'simulated'.")
     else:
-        raise ValueError("Invalid simulation mode. Please choose 'online' or 'offline'.")
-    
+        raise ValueError(
+            "Invalid simulation mode. Please choose 'online' or 'offline'."
+        )
+
     global_state.user_data.raw_data = data
     global_state.user_data.ground_truth = graph
 
     # hard-coded heterogeneous and domain index, later would be set by the user query
-    if 'domain_index' in data.columns:
-        if data.nunique(axis=0)['domain_index'] > 1:
+    if "domain_index" in data.columns:
+        if data.nunique(axis=0)["domain_index"] > 1:
             global_state.statistics.heterogeneous = True
         else:
             global_state.statistics.heterogeneous = False
-        global_state.statistics.domain_index = 'domain_index'
+        global_state.statistics.domain_index = "domain_index"
 
     return global_state
 
+
 def load_local_data(directory: str):
     # Xinyue Wang Implemented
-    '''
+    """
     :param directory: str for data directory
     :return: tuple of (config, data, graph)
-    '''
-    import json
-    import os
-    import pandas as pd
-    import numpy as np
+    """
+
 
     if not os.path.exists(directory):
         raise FileNotFoundError(f"The directory {directory} does not exist.")
@@ -112,7 +110,11 @@ def global_state_initialization(args: argparse.Namespace = None) -> GlobalState:
     global_state = GlobalState()
 
     global_state.user_data.initial_query = user_query
-
+    global_state.user_data.data_file = args.data_file
+    if args.dataset_name:
+        global_state.user_data.dataset_name = args.dataset_name
+    else:
+        global_state.user_data.dataset_name = args.data_file.split("/")[-1].split(".")[0]
     # Extract information from user queries
     # get all available algorithms
     algorithms = [algo.split('.')[0] for algo in os.listdir('causal_discovery/context/algos') if algo.endswith('.txt') and 'tagging' not in algo and 'guideline' not in algo]  

@@ -141,28 +141,35 @@ class Report_generation(object):
         self.visual_dir = global_state.user_data.output_graph_dir
 
     def get_title(self):
-        response_title = self.client.chat_completion(
-            prompt=f"You are a helpful assistant, please give me the name of the given dataset (store path: {self.data_file})\nFor example, if the dataset is Sachs.csv, then return me with 'Sachs'. If the dataset is a directory called Abalone, then return me with 'Abalone'.\nOnly give me the string of name, do not include anything else.",
-            json_response=False,
-        )
-        dataset = response_title
-        dataset = dataset.replace("_", " ")
-        title = f"Causal Discovery Report on {dataset.capitalize()}"
-        return title, dataset
+        # response_title = self.client.chat_completion(
+        #     prompt=f"You are a helpful assistant, please give me the name of the given dataset (store path: {self.data_file})\nFor example, if the dataset is Sachs.csv, then return me with 'Sachs'. If the dataset is a directory called Abalone, then return me with 'Abalone'.\nOnly give me the string of name, do not include anything else.",
+        #     json_response=False,
+        # )
+        dataset_name = self.global_state.user_data.dataset_name
+        dataset_name = dataset_name.replace("_", " ")
+        title = f"{dataset_name.capitalize()}的因果发现报告"
+        return title, dataset_name
 
     def intro_prompt(self):
         prompt = f"""
-        I want to conduct a causal discovery and inference on a dataset and write a report. There are some background knowledge about this dataset.
-        1. Please write a brief introduction paragraph. I only need the paragraph, don't include any title.
-        2. Do not include any Greek Letters, Please change any Greek Letter into Math Mode, for example, you should change γ into $\gamma$
-        
-        Background about this dataset: {self.knowledge_docs}
+任务背景：对一份数据集进行因果发现与推断分析，并撰写研究报告。
+
+当前任务为撰写一段简短的引言段落。只需要段落内容，无需包含任何标题。
+1. 请聚焦于从数据中识别因果结构这一核心目标。
+2. 使用“干预”、“因果机制”、“混淆因子”、“因果方向”等专业术语。
+3. 请确保内容简洁明了，避免冗长的解释。
+4. 强调背景知识在约束和引导因果发现过程中的重要性
+5. 请不要使用任何希腊字母，如需使用请转换为数学模式表示，例如应将 γ 转换为 $\gamma$。
+
+该数据集的背景信息如下：{self.knowledge_docs}
+
+请使用简体中文撰写一段简短的引言段落。
         """
 
         logger.process("Generating introduction section")
         response_dist = self.client.chat_completion(
             prompt=prompt,
-            system_prompt="You are an expert in the causal discovery field and helpful assistant.",
+            system_prompt="你是一个因果发现与推断分析领域的专家",
             json_response=False,
         )
         response_intro = response_dist
