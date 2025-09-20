@@ -115,7 +115,7 @@ dask==2025.2.0
 cloudpickle==3.1.1
 gpucsl==0.0.7
 colorama==0.4.6
-causalnex
+causalnex==0.12.1
 momentchi2==0.1.8
 numdifftools==0.9.41
 semopy==2.3.11
