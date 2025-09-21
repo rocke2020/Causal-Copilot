@@ -158,7 +158,9 @@ class LLMClient:
                 model=model if model else self.model,
                 messages=messages,
                 temperature=temperature,
+                timeout=600,
                 response_format={"type": "json_object"} if json_response else None
+                
             )
             content = response.choices[0].message.content
             

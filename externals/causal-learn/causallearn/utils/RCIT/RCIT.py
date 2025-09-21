@@ -4,6 +4,7 @@ from scipy.stats import chi2
 from scipy.linalg import pinv
 from momentchi2 import hbe, sw, lpb4
 from scipy.spatial.distance import pdist, squareform
+from loguru import logger
 
 
 class RCIT(object):
@@ -57,6 +58,7 @@ class RCIT(object):
         p: p value
         sta: test statistic
         """
+        logger.info(f'RCIT compute_pvalue {data_x.shape = }, {data_y.shape = }, {data_z.shape = }')
         d = data_z.shape[1]
         r = data_x.shape[0]
         r1 = 500 if (r > 500) else r
@@ -265,6 +267,7 @@ class RIT(object):
         p: p value
         sta: test statistic
         """
+        logger.info(f'RIT compute_pvalue {data_x.shape = }, {data_y.shape = }')
         r = data_x.shape[0]
         r1 = 500 if (r > 500) else r
 

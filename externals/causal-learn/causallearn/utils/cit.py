@@ -9,6 +9,7 @@ from causallearn.utils.FastKCI.FastKCI import FastKCI_CInd, FastKCI_UInd
 from causallearn.utils.RCIT.RCIT import RCIT as RCIT_CInd
 from causallearn.utils.RCIT.RCIT import RIT as RCIT_UInd
 from causallearn.utils.PCUtils import Helper
+from loguru import logger
 
 CONST_BINCOUNT_UNIQUE_THRESHOLD = 1e5
 NO_SPECIFIED_PARAMETERS_MSG = "NO SPECIFIED PARAMETERS"
@@ -248,6 +249,7 @@ class RCIT(CIT_Base):
         # Kernel-based conditional independence test.
         Xs, Ys, condition_set, cache_key = self.get_formatted_XYZ_and_cachekey(X, Y, condition_set)
         if cache_key in self.pvalue_cache: return self.pvalue_cache[cache_key]
+        logger.info(f'{type(self.data) = }, {self.data.shape = }, {Xs = }, {Ys = }, {condition_set = }')
         p = self.rit.compute_pvalue(self.data[:, Xs], self.data[:, Ys])[0] if len(condition_set) == 0 else \
             self.rcit.compute_pvalue(self.data[:, Xs], self.data[:, Ys], self.data[:, condition_set])[0]
         self.pvalue_cache[cache_key] = p

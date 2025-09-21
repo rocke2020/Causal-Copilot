@@ -1,8 +1,8 @@
 #!/bin/bash
 
 # Check if first argument is "0" to run directly with python, default is nohup.
-# 2024_causal_single_project 1_causal_single_project
-data_file="/data/rca-data/tian-qi/v6/1_causal_single_project/photovoltaic_power_station.csv"
+# 2024_causal_single_project 2025_causal_analysis
+data_file="/data/rca-data/tian-qi/v6/2025_causal_analysis/photovoltaic_power_station.csv"
 dataset_name="光伏发电站运营数据"
 initial_query="Do causal discovery on this dataset，核心运营指标是equivalent_operating_hours（等效时长）"
 if [ "$1" = "0" ]; then

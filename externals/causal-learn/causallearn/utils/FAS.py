@@ -15,6 +15,7 @@ from causallearn.graph.Node import Node
 from causallearn.utils.PCUtils.Helper import append_value
 from causallearn.utils.cit import *
 from causallearn.utils.PCUtils.BackgroundKnowledge import BackgroundKnowledge
+from loguru import logger
 
 
 def _process_node_pair(
@@ -78,6 +79,7 @@ def _process_node_pair(
     Neigh_x_noy = np.delete(Neigh_x, np.where(Neigh_x == y))
     
     for S in combinations(Neigh_x_noy, depth):
+        logger.info(f'{x = }, {y = }, {S = }')
         p = cg.ci_test(x, y, S)
         test_results[(x, y, S)] = p
         
