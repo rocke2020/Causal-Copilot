@@ -50,7 +50,7 @@ def main():
     response = client.chat_completion(
         prompt=prompt,
         system_prompt="You are a helpful assistant. You are a causal discovery expert. You are given a user query and you need to extract the information from the query and return a json object.",
-        json_response=True
+        json_response=True,
     )
     info_extracted = response
 

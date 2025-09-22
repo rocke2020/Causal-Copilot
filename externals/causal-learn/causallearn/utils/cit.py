@@ -242,6 +242,7 @@ class RCIT(CIT_Base):
         self.check_cache_method_consistent(
             'kci', hashlib.md5(json.dumps(rcit_kwargs, sort_keys=True).encode('utf-8')).hexdigest())
         self.assert_input_data_is_valid()
+        # logger.info(f'{rit_kwargs = }')
         self.rit = RCIT_UInd(**rit_kwargs)
         self.rcit = RCIT_CInd(**rcit_kwargs)
 
@@ -249,7 +250,7 @@ class RCIT(CIT_Base):
         # Kernel-based conditional independence test.
         Xs, Ys, condition_set, cache_key = self.get_formatted_XYZ_and_cachekey(X, Y, condition_set)
         if cache_key in self.pvalue_cache: return self.pvalue_cache[cache_key]
-        logger.info(f'{type(self.data) = }, {self.data.shape = }, {Xs = }, {Ys = }, {condition_set = }')
+        # logger.debug(f'{type(self.data) = }, {self.data.shape = }, {Xs = }, {Ys = }, {condition_set = }')
         p = self.rit.compute_pvalue(self.data[:, Xs], self.data[:, Ys])[0] if len(condition_set) == 0 else \
             self.rcit.compute_pvalue(self.data[:, Xs], self.data[:, Ys], self.data[:, condition_set])[0]
         self.pvalue_cache[cache_key] = p

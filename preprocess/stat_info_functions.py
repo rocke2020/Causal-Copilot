@@ -557,7 +557,9 @@ def imputation(df: pd.DataFrame, column_type: dict, ts: bool = False):
     # Z-score normalization
     scaler = StandardScaler()
     scaled_df = pd.DataFrame(scaler.fit_transform(df), columns=df.columns)
-
+    debug = False
+    if debug:
+        scaled_df.to_csv("test/scaled_data.csv", index=False)
     return scaled_df
 
 

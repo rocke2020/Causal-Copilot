@@ -1,0 +1,1 @@
+latexmk test/a0.tex -halt-on-error -pdfxe -outdir=test/out

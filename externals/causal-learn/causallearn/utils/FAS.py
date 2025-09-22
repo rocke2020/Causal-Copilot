@@ -79,8 +79,12 @@ def _process_node_pair(
     Neigh_x_noy = np.delete(Neigh_x, np.where(Neigh_x == y))
     
     for S in combinations(Neigh_x_noy, depth):
-        logger.info(f'{x = }, {y = }, {S = }')
+        debug = False
+        if debug:
+            logger.info(f'Starts {x = }, {y = }, {S = }')
         p = cg.ci_test(x, y, S)
+        if debug:
+            logger.info(f'Finished {x = }, {y = }, {S = }')
         test_results[(x, y, S)] = p
         
         if p > alpha:
@@ -212,7 +216,7 @@ def fas(data: ndarray, nodes: List[Node], independence_test_method: CIT_Base, al
             knowledge=knowledge, 
             verbose=verbose
         )
-        
+        n_jobs = 1  # debugging
         results = joblib.Parallel(n_jobs=n_jobs)(
             joblib.delayed(process_func)(x, y) for x, y in node_pairs
         )

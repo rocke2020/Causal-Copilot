@@ -1,5 +1,6 @@
 import numpy as np
 import itertools
+import pickle
 from scipy.stats import chi2
 from scipy.linalg import pinv
 from momentchi2 import hbe, sw, lpb4
@@ -267,7 +268,19 @@ class RIT(object):
         p: p value
         sta: test statistic
         """
-        logger.info(f'RIT compute_pvalue {data_x.shape = }, {data_y.shape = }')
+        debug=False
+        if debug:
+            logger.info(f'RIT compute_pvalue {data_x.shape = }, {data_y.shape = }')
+            logger.info(f'data_x[:10]\n{data_x[:10]}\ndata_y[:8]\n{data_y[:8]}')
+            out_file = "rit_input_data.pkl"
+            out_data = {
+                "data_x": data_x,
+                "data_y": data_y,
+            }
+            with open(out_file, "wb") as f:
+                pickle.dump(out_data, f)
+                logger.info(f"RIT input data saved to {out_file}")
+        
         r = data_x.shape[0]
         r1 = 500 if (r > 500) else r
 
@@ -317,6 +330,12 @@ class RIT(object):
                 p = 1 - chi2.cdf(sta, Cxy.size)
 
             else:
+                try:
+                    eigenvalues, eigenvectors = np.linalg.eigh(Cov)
+                except Exception as identifier:
+                    logger.error(f"Error in eigen decomposition: {identifier}")
+                    p = 0
+                    return p, sta
                 eigenvalues, eigenvectors = np.linalg.eigh(Cov)
                 eig_d = eigenvalues[eigenvalues > 0]
 
