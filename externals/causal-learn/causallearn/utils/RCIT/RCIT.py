@@ -137,7 +137,12 @@ class RCIT(object):
                 p = 1 - chi2.cdf(sta, Cxy_z.size)
 
             else:
-                eigenvalues, eigenvectors = np.linalg.eigh(Cov)
+                try:
+                    eigenvalues, eigenvectors = np.linalg.eigh(Cov)
+                except Exception as identifier:
+                    logger.warning(f"Error in eigen decomposition: {identifier}")
+                    p = 0
+                    return p, sta
                 eig_d = eigenvalues[eigenvalues > 0]
 
                 if self.approx == "gamma":
@@ -333,10 +338,9 @@ class RIT(object):
                 try:
                     eigenvalues, eigenvectors = np.linalg.eigh(Cov)
                 except Exception as identifier:
-                    logger.error(f"Error in eigen decomposition: {identifier}")
+                    logger.warning(f"Error in eigen decomposition: {identifier}")
                     p = 0
                     return p, sta
-                eigenvalues, eigenvectors = np.linalg.eigh(Cov)
                 eig_d = eigenvalues[eigenvalues > 0]
 
                 if self.approx == "gamma":

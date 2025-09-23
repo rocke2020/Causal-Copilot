@@ -1,8 +1,12 @@
-import re
-import os
 import json
-from typing import Optional, Dict, Any, Union
+import os
+import re
+import time
+from typing import Any, Dict, Optional, Union
+
+from loguru import logger
 from openai import OpenAI
+
 from .ollama_client import OllamaClient
 
 try:
@@ -154,14 +158,32 @@ class LLMClient:
             if json_response:
                 messages = self._ensure_json_in_messages(messages)
             
-            response = self.client.chat.completions.create(
-                model=model if model else self.model,
-                messages=messages,
-                temperature=temperature,
-                timeout=600,
-                response_format={"type": "json_object"} if json_response else None
-                
-            )
+            max_retries = 3
+            retry_count = 1
+            try:
+                response = self.client.chat.completions.create(
+                    model=model if model else self.model,
+                    messages=messages,
+                    temperature=temperature,
+                    timeout=600,
+                    response_format={"type": "json_object"} if json_response else None
+                    
+                )
+            except Exception as identifier:
+                if retry_count <= max_retries:
+                    logger.warning(f'{retry_count = } after {identifier}')
+                    time.sleep(1)  # Wait before retrying
+                    response = self.client.chat.completions.create(
+                        model=model if model else self.model,
+                        messages=messages,
+                        temperature=temperature,
+                        timeout=600,
+                        response_format={"type": "json_object"} if json_response else None
+                    )
+                    retry_count += 1
+                else:
+                    raise RuntimeError(f"Failed to get response after retries: {identifier}") from identifier
+
             content = response.choices[0].message.content
             
         elif self.provider == 'ollama':
